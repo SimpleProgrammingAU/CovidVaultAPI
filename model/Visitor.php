@@ -3,12 +3,30 @@
 require_once '../model/Config.php';
 
 class Visitor {
-  private int $_id;
-  private Location $_location;
-  private string $_name;
-  private string $_phone_number;
-  private DateTime $_arrival;
-  private DateTime $_departure;
+  /**
+   * @var int 
+   */
+  private $_id;
+  /**
+   * @var Location 
+   */
+  private $_location;
+  /**
+   * @var string 
+   */
+  private $_name;
+  /**
+   * @var string 
+   */
+  private $_phone_number;
+  /**
+   * @var DateTime 
+   */
+  private $_arrival;
+  /**
+   * @var DateTime 
+   */
+  private $_departure;
 
   public function getID():int { return $this->_id; }
   public function location():Location { return $this->_location; }
