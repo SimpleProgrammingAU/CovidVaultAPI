@@ -1,6 +1,6 @@
 <?php
 
-require_once './Config.php';
+require_once '../model/Config.php';
 
 class Visitor {
   private int $_id;

@@ -36,7 +36,7 @@ if ($_SERVER['CONTENT_TYPE'] !== 'application/json') {
   exit();
 }
 
-$$raw_post_data = file_get_contents('php://input');
+$raw_post_data = file_get_contents('php://input');
 
 if (!$json_data = json_decode($raw_post_data)) {
   $response = new Response();
@@ -47,12 +47,13 @@ if (!$json_data = json_decode($raw_post_data)) {
   exit();
 }
 
-if (!isset($json_data->businessName, $json_data->authContact, $json_data->phone, $json_data->streetAddress, $json_data->suburb, $json_data->state, $json_data->postcode, $json_data->password)) {
+if (!isset($json_data->businessName, $json_data->authContact, $json_data->email, $json_data->phone, $json_data->streetAddress, $json_data->suburb, $json_data->state, $json_data->postcode, $json_data->password)) {
   $response = new Response();
   $response->setHttpStatusCode(400);
   $response->setSuccess(false);
   (!isset($json_data->businessName) ? $response->addMessage("Error: request body does not contain a business name.") : false);
   (!isset($json_data->authContact) ? $response->addMessage("Error: request body does not contain an authorised contact.") : false);
+  (!isset($json_data->email) ? $response->addMessage("Error: request body does not contain an email address.") : false);
   (!isset($json_data->phone) ? $response->addMessage("Error: request body does not contain a contact phone number.") : false);
   (!isset($json_data->streetAddress) ? $response->addMessage("Error: request body does not contain a street address.") : false);
   (!isset($json_data->suburb) ? $response->addMessage("Error: request body does not contain a suburb name.") : false);
@@ -74,7 +75,7 @@ try {
   $location->address()->setSuburb(trim($json_data->suburb));
   $location->address()->setState(trim($json_data->state));
   $location->address()->setPostCode(trim($json_data->postcode));
-  if (isset($json_data->email)) $location->setEmailAddress(trim($json_data->email));
+  $location->setEmailAddress(trim($json_data->email));
   if (isset($json_data->abn)) $location->setABN(trim($json_data->abn));
 
   $query_email = $location->getEmailAddress();
@@ -141,7 +142,7 @@ try {
   $response->setHttpStatusCode(201);
   $response->setSuccess(true);
   $response->addMessage("Account successfully created.");
-  $response->setData($responseData);
+  $response->setData($response_data);
   $response->send();
   exit();
 
@@ -159,7 +160,7 @@ catch (APIException $e) {
   $response = new Response();
   $response->setHttpStatusCode(400);
   $response->setSuccess(false);
-  $response->addMessage("Error: " . $e->getMessage());
+  $response->addMessage("API Error: " . $e->getMessage());
   $response->send();
   exit();
 }

@@ -9,7 +9,7 @@ class Config {
    * @return bool Returns `true` if the phone number entered is a valid Australian number; false upon failure.
    */
   public static function ValidatePhoneNumber(string $pn):bool {
-    if (strlen($pn !== 12)) return false; //Phone number length confirmed
+    if (strlen($pn) !== 12) return false; //Phone number length confirmed
     if (substr($pn, 0, 3) !== "+61") return false; //Australian telephone number confirmed
     $vb = intval(substr($pn, 4, 2)); //substring to be evaluated against valid number ranges
     if (substr($pn, 3, 1) === "2" && ($vb < 37 && $vb !== 33)) return false; //NSW/ACT Number confirmed

@@ -1,12 +1,24 @@
 <?php
 
-require_once './Config.php';
+require_once '../model/Config.php';
 
 class Address {
-  private string $_street_address;
-  private string $_suburb;
-  private string $_state;
-  private string $_postcode;
+  /**
+   * @var string 
+   */
+  private $_street_address;
+  /**
+   * @var string 
+   */
+  private $_suburb;
+  /**
+   * @var string 
+   */
+  private $_state;
+  /**
+   * @var string 
+   */
+  private $_postcode;
 
   public function __toString():string {
     return "{$this->_street_address}\r\n{$this->_suburb} {$this->_state} {$this->_postcode}"; 

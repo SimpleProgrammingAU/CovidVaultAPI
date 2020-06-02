@@ -7,19 +7,19 @@ class Response {
      * The HTTP status code of the API response.
      * @var int 
      */
-    private int $_httpStatusCode;
+    private $_httpStatusCode;
 
     /**
      * A flag to inform the recipient of the success status of the API query.
      * @var bool `true` if the API query was successful, `false` upon failure.
      */
-    private bool $_success;
+    private $_success;
     
     /**
      * An array of messages sent to the client upon completion of the API query.
      * @var string[]
      */
-    private array $_messages = [];
+    private $_messages = [];
     
     /**
      * A data object, typically an associative array, containing the query results.
@@ -31,13 +31,13 @@ class Response {
      * Determines whether cached results can be returned to the client.
      * @var boolean `true` if use of the cache is permitted, `false` otherwise.
      */
-    private bool $_toCache = false;
+    private $_toCache = false;
 
     /**
      * The associative array that contains the HTTP status code, success flag, messages, and data to be issued to the client upon completion of the query.
      * @var array
      */
-    private array $_responseData = [];
+    private $_responseData = [];
 
     /**
      * Sets the HTTP status code to be returned to the client.

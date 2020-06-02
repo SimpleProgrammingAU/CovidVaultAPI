@@ -1,29 +1,55 @@
 <?php
 
-require_once './Config.php';
+require_once '../model/Config.php';
+require_once '../model/Address.php';
 
 class Location {
-  private int $_id;
-  private string $_name;
-  private string $_auth_contact;
-  private string $_avatar;
-  private string $_phone_number;
-  private string $_email;
-  private Address $_address;
-  private string $_abn;
+  /**
+   * @var int 
+   */
+  private $_id;
+  /**
+   * @var string 
+   */
+  private $_name;
+  /**
+   * @var string 
+   */
+  private $_auth_contact;
+  /**
+   * @var string 
+   */
+  private $_avatar;
+  /**
+   * @var string 
+   */
+  private $_phone_number;
+  /**
+   * @var string 
+   */
+  private $_email;
+  /**
+   * @var Address 
+   */
+  private $_address;
+  /**
+   * @var string 
+   */
+  private $_abn;
 
   public function __construct() {
-    $this->_id = $this->_name = $this->_auth_contact = $this->_avatar = $this->_phone_number = $this->_email = $this->_address = $this->_abn = null;
+    $this->_id = $this->_name = $this->_auth_contact = $this->_avatar = $this->_phone_number = $this->_email = $this->_abn = null;
+    $this->_address = new Address();
   }
 
   public function getID():int { return $this->_id; }
   public function getName():string { return $this->_name; }
   public function getAuthorisedContact():string { return $this->_auth_contact; }
-  public function getAvatar():string { return $this->_avatar; }
+  public function getAvatar():string { return strval($this->_avatar); }
   public function getPhoneNumber():string { return $this->_phone_number; }
   public function getEmailAddress():string { return $this->_email; }
   public function address():Address { return $this->_address; }
-  public function getABN():string { return $this->_abn; }
+  public function getABN():string { return strval($this->_abn); }
 
   public function setID(int $id):bool {
     if (is_null($id) || !is_int($id)) throw new APIException("ID must not be null and must be an integer value.");

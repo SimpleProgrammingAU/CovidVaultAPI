@@ -50,7 +50,7 @@ try {
         exit();
     }
 
-    if ($_isActive !== 1) {
+    if (!$_isActive) {
         $response = new Response();
         $response->setHttpStatusCode(401);
         $response->setSuccess(false);

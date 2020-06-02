@@ -1,6 +1,6 @@
 <?php
 
-require_once './db.php';
+require_once '../model/DB.php';
 require_once '../model/Response.php';
 
 try{
@@ -134,12 +134,12 @@ if (array_key_exists("id", $_GET)) {
             $_accountID = $row->accountID;
             $_accessToken = $row->access_token;
             $_refreshToken = $row->refresh_token;
-            $_isActive = $row->is_active;
+            $_is_active = $row->is_active;
             $_loginAttempts = $row->login_attempts;
             $_accessExpiry = $row->access_token_expiry;
             $_refreshExpiry = $row->refresh_token_expiry;
 
-            if (!$_isActive === 'Y') {
+            if ($_is_active !== 1) {
                 $response = new Response();
                 $response->setHttpStatusCode(401);
                 $response->setSuccess(false);
@@ -168,7 +168,7 @@ if (array_key_exists("id", $_GET)) {
 
             $accessToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
             $refreshToken = base64_encode(bin2hex(openssl_random_pseudo_bytes(24)).time());
-            $accessExpiry = 1200;
+            $accessExpiry = 16*60*60;
             $refreshExpiry = 28*24*60*60;
 
             $query= $writeDB->prepare("UPDATE `sessions` SET
@@ -306,12 +306,11 @@ if (array_key_exists("id", $_GET)) {
         }
 
         $row = $query->fetch(PDO::FETCH_OBJ);
-        $id = $row->id;
-        $accountID = $row->account_id;
-        $name = $row->name;
+        $account_id = $row->id;
+        $name = $row->business_name;
         $email = $row->email;
         $dbPassword = $row->auth;
-        $isActive = $row->is_active;
+        $is_active = $row->is_active;
         $loginAttempts = $row->login_attempts;
 
         if ($loginAttempts > 2) {
@@ -325,7 +324,7 @@ if (array_key_exists("id", $_GET)) {
 
         if (!password_verify($password, $dbPassword)) {
             $query = $writeDB->prepare("UPDATE `accounts` SET `login_attempts`=`login_attempts`+1 WHERE id=:id");
-            $query->bindParam(":id", $id, PDO::PARAM_INT);
+            $query->bindParam(":id", $account_id, PDO::PARAM_INT);
             $query->execute();
 
             $response = new Response();
@@ -336,7 +335,7 @@ if (array_key_exists("id", $_GET)) {
             exit();
         }
 
-        if ($isActive !== 'Y') {
+        if (!$is_active) {
             $response = new Response();
             $response->setHttpStatusCode(401);
             $response->setSuccess(false);
@@ -362,13 +361,13 @@ if (array_key_exists("id", $_GET)) {
 
         $writeDB->beginTransaction();
         $query = $writeDB->prepare("UPDATE `accounts` SET `login_attempts`=0 WHERE id=:id");
-        $query->bindParam(":id", $id, PDO::PARAM_INT);
+        $query->bindParam(":id", $account_id, PDO::PARAM_INT);
         $query->execute();
 
         $query = $writeDB->prepare("INSERT INTO `sessions`
                     (`account_id`, `access_token`, `access_token_expiry`, `refresh_token`, `refresh_token_expiry`)
                     VALUES (:accountID, :accessToken, DATE_ADD(NOW(), INTERVAL :accessExpiry SECOND), :refreshToken, DATE_ADD(NOW(), INTERVAL :refreshExpiry SECOND))");
-        $query->bindParam(":accountID", $id, PDO::PARAM_INT);
+        $query->bindParam(":accountID", $account_id, PDO::PARAM_INT);
         $query->bindParam(":accessToken", $accessToken, PDO::PARAM_STR);
         $query->bindParam(":accessExpiry", $accessExpiry, PDO::PARAM_INT);
         $query->bindParam(":refreshToken", $refreshToken, PDO::PARAM_STR);
