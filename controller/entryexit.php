@@ -18,7 +18,7 @@ try {
   exit();
 }
 
-include('authenticate.php');
+//include('authenticate.php'); Authentication to be included where appropriate
 
 try {
 
@@ -80,6 +80,7 @@ try {
     $response = new Response();
     $response->setHttpStatusCode(201);
     $response->setSuccess(true);
+    $response->setData(["id" => $writeDB->lastInsertId()]);
     $response->addMessage("Visitor successfully checked in.");
     $response->send();
     exit();
@@ -116,7 +117,7 @@ try {
     }
 
     $response = new Response();
-    $response->setHttpStatusCode(201);
+    $response->setHttpStatusCode(200);
     $response->setSuccess(true);
     $response->addMessage("Visitor successfully checked out.");
     $response->send();
@@ -141,7 +142,7 @@ try {
   exit();
 } catch (APIException $e) {
   $response = new Response();
-  $response->setHttpStatusCode(200);
+  $response->setHttpStatusCode(400);
   $response->setSuccess(false);
   $response->addMessage("API Exception: " . $e->getMessage());
   $response->send();
