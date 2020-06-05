@@ -101,8 +101,8 @@ try {
   $query_name = $location->getName();
   $query_email = $location->getEmailAddress();
   $query_phone = $location->getPhoneNumber();
-  $query_postcode = $location->getPhoneNumber();
-  $query_state = $location->address()->getPostcode();
+  $query_postcode = $location->address()->getPostcode();
+  $query_state = $location->address()->getState();
   $query_address = $location->address()->getStreetAddress();
   $query_suburb = $location->address()->getSuburb();
   $query = $writeDB->prepare("INSERT INTO `accounts`
