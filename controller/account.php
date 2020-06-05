@@ -68,7 +68,6 @@ try {
     $response = new Response();
     $response->setHttpStatusCode(201);
     $response->setSuccess(true);
-    $response->addMessage("Account successfully created.");
     $response->setData($response_data);
     $response->send();
     exit();
