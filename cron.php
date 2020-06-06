@@ -14,7 +14,7 @@ try {
   exit();
 }
 
-$query = $writeDB->prepare("DELETE FROM `contacts` WHERE arr < DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL 2 MONTH)");
+$query = $writeDB->prepare("DELETE FROM `contacts` WHERE arr < DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL 28 DAY)");
 $query->execute();
 
 $query = $writeDB->prepare("DELETE FROM `sessions` WHERE refresh_token_expiry < CURRENT_TIMESTAMP()");
