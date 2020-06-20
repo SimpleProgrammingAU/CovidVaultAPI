@@ -1,5 +1,7 @@
 <?php
 
+date_default_timezone_set("Australia/Melbourne");
+
 class Config {
   /**
    * Validates the inputed phone number against the list of valid phone number prefixes listed in {@link https://en.wikipedia.org/wiki/Telephone_numbers_in_Australia Wikipedia}.

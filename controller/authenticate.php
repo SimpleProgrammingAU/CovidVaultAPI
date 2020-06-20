@@ -12,7 +12,7 @@ $accessToken = $_SERVER['HTTP_AUTHORIZATION'];
 
 try {
 
-    $query = $writeDB->prepare("SELECT `account_id`, `access_token_expiry`, `is_active`, `login_attempts` FROM `sessions`, `accounts` WHERE `sessions`.`account_id` = `accounts`.`id` AND `access_token` = :accessToken");
+    $query = $writeDB->prepare("SELECT `account_id`, UNIX_TIMESTAMP(`access_token_expiry`) AS `access_token_expiry`, `is_active`, `login_attempts` FROM `sessions`, `accounts` WHERE `sessions`.`account_id` = `accounts`.`id` AND `access_token` = :accessToken");
     $query->bindParam(":accessToken", $accessToken, PDO::PARAM_STR);
     $query->execute();
 
@@ -41,7 +41,7 @@ try {
         exit();
     }
 
-    if (strtotime($_accessExpiry) < time()) {
+    if ($_accessExpiry < time()) {
         $response = new Response();
         $response->setHttpStatusCode(401);
         $response->setSuccess(false);

@@ -32,9 +32,9 @@ class Visitor {
   public function location():Location { return $this->_location; }
   public function getName():string { return $this->_name; }
   public function getPhoneNumber():string { return $this->_phone_number; }
-  public function getArrival():string { return $this->_arrival->format("d/m/Y H:i"); }
+  public function getArrival():string { return $this->_arrival->format("Y-m-d H:i:s"); }
   public function getDeparture():string { 
-    if (!is_null($this->_departure)) return $this->_departure->format("d/m/Y H:i");
+    if (!is_null($this->_departure)) return $this->_departure->format("Y-m-d H:i:s");
     else return "";
   }
 

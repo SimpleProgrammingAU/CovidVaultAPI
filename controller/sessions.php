@@ -113,8 +113,8 @@ if (array_key_exists("id", $_GET)) {
         try {
 
             $refreshToken = $jsonData->refreshToken;
-            $query = $writeDB->prepare("SELECT `sessions`.`id` as sessionID, `sessions`.`account_id` as accountID, access_token, refresh_token, access_token_expiry, refresh_token_expiry, is_active, login_attempts FROM `sessions`, `accounts` WHERE `accounts`.`id`=`sessions`.`account_id` AND `sessions`.`id` = :sessionID AND `sessions`.`access_token` = :accessToken AND `sessions`.`refresh_token` = :refreshToken");
-            $query->bindParam(":sessionID", $sessionid, PDO::PARAM_INT);
+            $query = $writeDB->prepare("SELECT `sessions`.`id` as sessionID, `sessions`.`account_id` as accountID, access_token, refresh_token, UNIX_TIMESTAMP(access_token_expiry) AS access_token_expiry,  UNIX_TIMESTAMP(refresh_token_expiry) AS refresh_token_expiry, is_active, login_attempts FROM `sessions`, `accounts` WHERE `accounts`.`id`=`sessions`.`account_id` AND `sessions`.`id` = :sessionID AND `sessions`.`access_token` = :accessToken AND `sessions`.`refresh_token` = :refreshToken");
+            $query->bindParam(":sessionID", $sessionid, PDO::PARAM_STR);
             $query->bindParam(":accessToken", $accessToken, PDO::PARAM_STR);
             $query->bindParam(":refreshToken", $refreshToken, PDO::PARAM_STR);
             $query->execute();
@@ -134,7 +134,7 @@ if (array_key_exists("id", $_GET)) {
             $_accountID = $row->accountID;
             $_accessToken = $row->access_token;
             $_refreshToken = $row->refresh_token;
-            $_is_active = $row->is_active;
+            $_is_active = intval($row->is_active);
             $_loginAttempts = $row->login_attempts;
             $_accessExpiry = $row->access_token_expiry;
             $_refreshExpiry = $row->refresh_token_expiry;
@@ -143,7 +143,7 @@ if (array_key_exists("id", $_GET)) {
                 $response = new Response();
                 $response->setHttpStatusCode(401);
                 $response->setSuccess(false);
-                $response->addMessage("Error: account is not active.");
+                $response->addMessage("Error: account does not have this feature switched on.");
                 $response->send();
                 exit();
             }
@@ -157,7 +157,7 @@ if (array_key_exists("id", $_GET)) {
                 exit();
             }
 
-            if (strtotime($_refreshExpiry) < time()) {
+            if ($_refreshExpiry < time()) {
                 $response = new Response();
                 $response->setHttpStatusCode(401);
                 $response->setSuccess(false);
@@ -199,11 +199,12 @@ if (array_key_exists("id", $_GET)) {
             }
 
             $returnData = [];
-            $returnData['session_id'] = $_sessionID;
-            $returnData['access_token'] = $accessToken;
-            $returnData['access_expiry'] = $accessExpiry;
-            $returnData['refresh_token'] = $refreshToken;
-            $returnData['refresh_expiry'] = $refreshExpiry;
+            $returnData['accountID'] = $_accountID;
+            $returnData['sessionID'] = $_sessionID;
+            $returnData['accessToken'] = $accessToken;
+            $returnData['accessExpiry'] = $accessExpiry;
+            $returnData['refreshToken'] = $refreshToken;
+            $returnData['refreshExpiry'] = $refreshExpiry;
 
             $response = new Response();
             $response->setHttpStatusCode(200);
@@ -310,7 +311,7 @@ if (array_key_exists("id", $_GET)) {
         $name = $row->business_name;
         $email = $row->email;
         $dbPassword = $row->auth;
-        $is_active = $row->is_active;
+        $is_active = intval($row->is_active);
         $loginAttempts = $row->login_attempts;
 
         if ($loginAttempts > 2) {
@@ -324,7 +325,7 @@ if (array_key_exists("id", $_GET)) {
 
         if (!password_verify($password, $dbPassword)) {
             $query = $writeDB->prepare("UPDATE `accounts` SET `login_attempts`=`login_attempts`+1 WHERE id=:id");
-            $query->bindParam(":id", $account_id, PDO::PARAM_INT);
+            $query->bindParam(":id", $account_id, PDO::PARAM_STR);
             $query->execute();
 
             $response = new Response();
@@ -335,11 +336,12 @@ if (array_key_exists("id", $_GET)) {
             exit();
         }
 
-        if (!$is_active) {
+        if ($is_active !== 1) {
             $response = new Response();
             $response->setHttpStatusCode(401);
             $response->setSuccess(false);
-            $response->addMessage("Error: account not active.");
+            $response->addMessage("Error: account does not have this feature switched on.");
+            $response->setData(["is_active" => $is_active, "from_server" => $row->is_active ]);
             $response->send();
             exit();
         }
@@ -361,13 +363,13 @@ if (array_key_exists("id", $_GET)) {
 
         $writeDB->beginTransaction();
         $query = $writeDB->prepare("UPDATE `accounts` SET `login_attempts`=0 WHERE id=:id");
-        $query->bindParam(":id", $account_id, PDO::PARAM_INT);
+        $query->bindParam(":id", $account_id, PDO::PARAM_STR);
         $query->execute();
 
         $query = $writeDB->prepare("INSERT INTO `sessions`
                     (`account_id`, `access_token`, `access_token_expiry`, `refresh_token`, `refresh_token_expiry`)
                     VALUES (:accountID, :accessToken, DATE_ADD(NOW(), INTERVAL :accessExpiry SECOND), :refreshToken, DATE_ADD(NOW(), INTERVAL :refreshExpiry SECOND))");
-        $query->bindParam(":accountID", $account_id, PDO::PARAM_INT);
+        $query->bindParam(":accountID", $account_id, PDO::PARAM_STR);
         $query->bindParam(":accessToken", $accessToken, PDO::PARAM_STR);
         $query->bindParam(":accessExpiry", $accessExpiry, PDO::PARAM_INT);
         $query->bindParam(":refreshToken", $refreshToken, PDO::PARAM_STR);
@@ -379,11 +381,12 @@ if (array_key_exists("id", $_GET)) {
         $writeDB->commit();
 
         $returnData = [];
-        $returnData['session_id'] = intval($lastSessionId);
-        $returnData['access_token'] = $accessToken;
-        $returnData['access_expiry'] = $accessExpiry;
-        $returnData['refresh_token'] = $refreshToken;
-        $returnData['refresh_expiry'] = $refreshExpiry;
+        $returnData['accountID'] = $account_id;
+        $returnData['sessionID'] = intval($lastSessionId);
+        $returnData['accessToken'] = $accessToken;
+        $returnData['accessExpiry'] = $accessExpiry;
+        $returnData['refreshToken'] = $refreshToken;
+        $returnData['refreshExpiry'] = $refreshExpiry;
 
         $response = new Response();
         $response->setHttpStatusCode(201);

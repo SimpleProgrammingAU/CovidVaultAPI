@@ -51,8 +51,9 @@ class Location {
   public function address():Address { return $this->_address; }
   public function getABN():string { return strval($this->_abn); }
 
-  public function setID(int $id):bool {
+  public function setID(int $id = 0):bool {
     if (is_null($id) || !is_int($id)) throw new APIException("ID must not be null and must be an integer value.");
+    if ($id === 0) $id = random_int(1000000, PHP_INT_MAX);
     $this->_id = $id;
     return true;
   }

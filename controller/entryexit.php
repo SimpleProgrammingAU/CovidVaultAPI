@@ -57,18 +57,21 @@ try {
     $visitor = new Visitor();
     $visitor->setName(trim($json_data->name));
     $visitor->setPhoneNumber(trim($json_data->phone));
+    (isset($json_data->arr)) ? $visitor->setArrival($json_data->arr) : $visitor->setArrival(date('Y-m-d H:i:s'));
 
     $query_name = $visitor->getName();
     $query_phone = $visitor->getPhoneNumber();
     $query_account_id = intval($_GET['l']);
-    $query = $writeDB->prepare("INSERT INTO `contacts`(`account_id`,`name`, `phone`) VALUES (:a, :n, :p)");
-    $query->bindParam(':a', $query_account_id, PDO::PARAM_INT);
+    $query_arr = $visitor->getArrival();
+    $query = $writeDB->prepare("INSERT INTO `contacts`(`account_id`,`name`, `phone`, `arr`) VALUES (:a, :n, :p, :arr)");
+    $query->bindParam(':a', $query_account_id, PDO::PARAM_STR);
     $query->bindParam(':n', $query_name, PDO::PARAM_STR);
     $query->bindParam(':p', $query_phone, PDO::PARAM_STR);
+    $query->bindParam(':arr', $query_arr, PDO::PARAM_STR);
     $query->execute();
 
     $row_count = $query->rowCount();
-    if ($rowCount === 0) {
+    if ($row_count === 0) {
       $response = new Response();
       $response->setHttpStatusCode(409);
       $response->setSuccess(false);
@@ -93,7 +96,7 @@ try {
     $query->execute();
     
     $row_count = $query->rowCount();
-    if ($rowCount === 0) {
+    if ($row_count === 0) {
       $response = new Response();
       $response->setHttpStatusCode(409);
       $response->setSuccess(false);
@@ -107,7 +110,7 @@ try {
     $query->execute();
 
     $row_count = $query->rowCount();
-    if ($rowCount === 0) {
+    if ($row_count === 0) {
       $response = new Response();
       $response->setHttpStatusCode(409);
       $response->setSuccess(false);
