@@ -1,6 +1,6 @@
 <?php
 
-require_once './Config.php';
+require_once '../model/Config.php';
 
 class FollowOn {
 
@@ -36,9 +36,9 @@ class FollowOn {
   public function getText():string { return $this->_text; }
   public function getImg():string { return $this->_img; }
   public function getURL():string { return $this->_url; }
-  public function getExpiry():string {
+  public function getExpiry() {
     if (isset($this->_expiry)) return $this->_expiry->format("Y-m-d H:i:s");
-    else return "Does not expire";
+    else return null;
   }
   
   public function setID(int $id):bool {
@@ -66,11 +66,14 @@ class FollowOn {
   }
 
   public function setURL(string $url):bool {
-    if (filter_var($url, FILTER_VALIDATE_URL) !== false) $this->_url = $url;
-    else return false;
+    if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
+      $this->_url = $url;
+      return true;
+    } else return false;
   }
 
   public function setExpiry(string $date):bool {
+    if (strlen($date) === 0) return false;
     $datetime = date_create($date);
     if ($datetime === false) throw new APIException("Date format not recognised.");
     $this->_expiry = $datetime;

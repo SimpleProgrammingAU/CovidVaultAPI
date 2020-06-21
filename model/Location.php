@@ -2,6 +2,7 @@
 
 require_once '../model/Config.php';
 require_once '../model/Address.php';
+require_once '../model/FollowOn.php';
 
 class Location {
   /**
@@ -36,10 +37,15 @@ class Location {
    * @var string 
    */
   private $_abn;
+  /**
+   * @var FollowOn
+   */
+  private $_follow_on;
 
   public function __construct() {
     $this->_id = $this->_name = $this->_auth_contact = $this->_avatar = $this->_phone_number = $this->_email = $this->_abn = null;
     $this->_address = new Address();
+    $this->_follow_on = new FollowOn();
   }
 
   public function getID():int { return $this->_id; }
@@ -50,6 +56,7 @@ class Location {
   public function getEmailAddress():string { return $this->_email; }
   public function address():Address { return $this->_address; }
   public function getABN():string { return strval($this->_abn); }
+  public function followOn():FollowOn { return $this->_follow_on; }
 
   public function setID(int $id = 0):bool {
     if (is_null($id) || !is_int($id)) throw new APIException("ID must not be null and must be an integer value.");
