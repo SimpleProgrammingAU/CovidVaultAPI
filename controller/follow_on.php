@@ -211,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $row = $query->fetch(PDO::FETCH_ASSOC);
   $row_check = $row['cnt'];
 
-  $query = $writeDB->prepare("DELETE FROM follow_ons WHERE account_ id=:id");
+  $query = $writeDB->prepare("DELETE FROM follow_ons WHERE account_id=:id");
   $query->bindParam(':id', $query_id, PDO::PARAM_STR);
   $query->execute();
 
