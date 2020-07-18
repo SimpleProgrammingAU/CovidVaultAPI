@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $location->setID($_GET['id']);
 
   $query_id = $location->getID();
-  $query = $writeDB->prepare("SELECT * FROM `follow_ons` WHERE account_id=:id AND expiry > CURRENT_TIMESTAMP() ORDER BY id DESC LIMIT 1");
+  $query = $writeDB->prepare("SELECT * FROM `follow_ons` WHERE account_id=:id ORDER BY id DESC LIMIT 1");
   $query->bindParam(':id', $query_id, PDO::PARAM_STR);
   $query->execute();
 
@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $location->followOn()->setText($row['text']);
   $location->followOn()->setImg($row['img']);
   $location->followOn()->setURL($row['url']);
-  $location->followOn()->setExpiry($row['expiry']);
+  ($row['expiry'] !== null) ? $location->followOn()->setExpiry($row['expiry']) : false;
 
   $response_data = [
     "text" => $location->followOn()->getText(),
@@ -124,15 +124,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
   }
 
+  include('./authenticate.php');
+
+  $query_id = $location->getID();
+  $query = $writeDB->prepare("SELECT * FROM follow_ons WHERE account_id=:id ORDER BY id DESC LIMIT 1");
+  $query->bindParam(':id', $query_id, PDO::PARAM_STR);
+  $query->execute();
+
+  $row_count = $query->rowCount();
+  if ($row_count > 0) {
+    $row = $query->fetch(PDO::FETCH_ASSOC);
+    $location->followOn()->setType($row['type']);
+    $location->followOn()->setText($row['text']);
+    $location->followOn()->setImg($row['img']);
+    $location->followOn()->setURL($row['url']);
+    $location->followOn()->setExpiry($row['expiry']);
+  }
+
   $location->followOn()->setType($_POST['type']);
   $location->followOn()->setText($_POST['text']);
   (isset($target_file) ? $location->followOn()->setImg(substr($target_file, 13)) : false);
   $location->followOn()->setURL($_POST['url']);
   $location->followOn()->setExpiry($_POST['expiry']);
-
-  include('./authenticate.php');
   
-  $query_id = $location->getID();
   $query_type = $location->followOn()->getType();
   $query_text = $location->followOn()->getText();
   $query_img = $location->followOn()->getImg();
@@ -175,11 +189,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 
   $location = new Location();
+  $location->setID($_GET['id']);
   $query_id = $location->getID();
 
   include('./authenticate.php');
 
-  $query = $writeDB->prepare("SELECT COUNT(*) AS cnt FROM follow_ons WHERE id=:id");
+  $query = $writeDB->prepare("SELECT COUNT(*) AS cnt FROM follow_ons WHERE account_id=:id");
   $query->bindParam(':id', $query_id, PDO::PARAM_STR);
   $query->execute();
 
@@ -196,10 +211,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $row = $query->fetch(PDO::FETCH_ASSOC);
   $row_check = $row['cnt'];
 
-  $query = $writeDB->prepare("DELETE FROM follow_ons WHERE id=:id");
+  $query = $writeDB->prepare("DELETE FROM follow_ons WHERE account_ id=:id");
   $query->bindParam(':id', $query_id, PDO::PARAM_STR);
   $query->execute();
 
+  $row_count = $query->rowCount();
   if ($row_count === $row_check) {
     $response = new Response();
     $response->setHttpStatusCode(500);
@@ -213,7 +229,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $response->setHttpStatusCode(200);
   $response->setSuccess(true);
   $response->addMessage("Follow-thru successfully erased.");
-  $response->setData($response_data);
   $response->send();
   exit();
   
