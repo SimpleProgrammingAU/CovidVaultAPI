@@ -6,11 +6,13 @@ The RESTful API that supports the CovidVault GUI.
 ## Endpoints
 ### Account
 ![Public GET Endpoint](https://img.shields.io/badge/Public-GET-green) https://root_address/account/[id](/ "Account ID")
+
 Returns the following account properties
 - `name` the business name
 - `logo` the stored logo filename (empty string if none available)
 
 ![Authenticated GET Endpoint](https://img.shields.io/badge/Authenticated-GET-green) https://root_address/account/[id](/ "Account ID")
+
 Returns the following account properties
 - `name` the business name
 - `logo` the stored logo filename (empty string if none available)
@@ -23,7 +25,9 @@ Returns the following account properties
 - `email` email address of the authorised contact
 
 ![Public POST Endpoint](https://img.shields.io/badge/Public-POST-orange) https://root_address/account
+
 Creates a new venue account.
+
 Accepts the following account properties:
 - ![Required](https://img.shields.io/badge/-Required-red) `name`
 - ![Required](https://img.shields.io/badge/-Required-red) `logo`
@@ -37,12 +41,15 @@ Accepts the following account properties:
 Data must be entered in format `application/json`.
 
 ![Public POST Endpoint](https://img.shields.io/badge/Public-POST-orange) https://root_address/account/[id](/ "Account ID")
+
 Permits the upload of a logo via the API. Accepts the following account properties:
 - ![Required](https://img.shields.io/badge/-Required-red) `logo`
+
 Data must be entered in format `multipart/form-data`.
 
 ### Entry
 ![Public POST Endpoint](https://img.shields.io/badge/Public-POST-orange) https://root_address/entry/[id](/ "Account ID")
+
 Registers a visitor entry at a specified venue. Accepts the following visitor properties:
 - ![Required](https://img.shields.io/badge/-Required-red) `name` visitor's name
 - ![Required](https://img.shields.io/badge/-Required-red) `phone` visitor's phone number in the format +61XXXXXXXXX as a string
@@ -54,11 +61,13 @@ Returns the following properties:
 
 ### Exit
 ![Public PATCH Endpoint](https://img.shields.io/badge/Public-PATCH-grey) https://root_address/exit/[id](/ "Entry ID")
+
 Optional registration to check-out a previously entered visitor. Accepts the following visitor properties:
 - ![Required](https://img.shields.io/badge/-Required-red) `id` the unique identifier of the check-in entry
 
 ### Session
 ![Public POST Endpoint](https://img.shields.io/badge/Public-POST-orange) https://root_address/session
+
 Creates a user sign-on event for authentication. Accepts the following properties:
 - ![Required](https://img.shields.io/badge/-Required-red) `username` contact email address
 - ![Required](https://img.shields.io/badge/-Required-red) `password`
@@ -72,6 +81,7 @@ Returns the following properties:
 - `refreshExpiry` the date and time of the refresh token's expiry
 
 ![Authenticated PATCH Endpoint](https://img.shields.io/badge/Authenticated-PATCH-grey) https://root_address/session/[id](/ "Session ID")
+
 Refreshes the access token. Accepts the following properties:
 - ![Required](https://img.shields.io/badge/-Required-red) `refreshToken` the private key to reestablish the session without signin
 
@@ -84,6 +94,7 @@ Returns the following properties:
 - `refreshExpiry` the date and time of the refresh token's expiry
 
 ![Authenticated DELETE Endpoint](https://img.shields.io/badge/Authenticated-DELETE-red) https://root_address/session/[id](/ "Session ID")
+
 Signs the user out and deletes access tokens from the database.
 
 Returns the following properties:
