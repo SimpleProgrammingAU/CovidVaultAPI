@@ -100,5 +100,14 @@ Signs the user out and deletes access tokens from the database.
 Returns the following properties:
 - `sessionID` the session ID
 
+### Statistics
+![Authenticated GET Endpoint](https://img.shields.io/badge/Authenticated-GET-orange) https://root_address/statistics/[id](/ "Account ID")
+
+Returns the following anonymised statistics:
+- `byDay` the number of visitors by day of the week
+- `byHour` the number of visitors by hour of the day
+- `return` the percentage (as a number between 0 and 100) of visitors that appear more than once in the database
+- `today` the number of visitors recorded today
+
 ## Authenticated Endpoints
 To access authenticated endpoints, the query must be sent with the `Authorization` header set to a valid `accessToken`.
