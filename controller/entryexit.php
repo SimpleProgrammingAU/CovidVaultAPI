@@ -90,7 +90,12 @@ try {
 
   } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH' && array_key_exists('v', $_GET)) { //EXIT
 
-    $query_id = intval($_GET['v']);
+    $visitor = new Visitor();
+    $visitor->setID(intval($_GET['v']));
+    $visitor->setDeparture(date('Y-m-d H:i:s'));
+
+    $query_id = $visitor->getID();
+    $query_dep = $visitor->getDeparture();
     $query = $writeDB->prepare("SELECT * FROM `contacts` WHERE id=:id");
     $query->bindParam(':id', $query_id, PDO::PARAM_INT);
     $query->execute();
@@ -105,8 +110,9 @@ try {
       exit();
     }
 
-    $query = $writeDB->prepare("UPDATE `contacts` SET `dep`=CURRENT_TIMESTAMP() WHERE id=:id");
+    $query = $writeDB->prepare("UPDATE `contacts` SET `dep`=:dep WHERE id=:id");
     $query->bindParam(':id', $query_id, PDO::PARAM_INT);
+    $query->bindParam(':dep', $query_dep, PDO::PARAM_INT);
     $query->execute();
 
     $row_count = $query->rowCount();
