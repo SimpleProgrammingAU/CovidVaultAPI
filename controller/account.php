@@ -37,7 +37,7 @@ try {
       $location->setID(intval($_GET['id']));
 
       $query_id = $location->getID();
-      $query = $writeDB->prepare("SELECT `business_name`, `auth_contact`, `avatar`, `phone`, `street_address`, `suburb`, `state`, `postcode`, `email` FROM `accounts` WHERE id=:id");
+      $query = $writeDB->prepare("SELECT `business_name`, `auth_contact`, `avatar`, `phone`, `street_address`, `suburb`, `state`, `postcode`, `email`, `checklist_select_all` FROM `accounts` WHERE id=:id");
       $query->bindParam(':id', $query_id, PDO::PARAM_STR);
       $query->execute();
       
@@ -61,6 +61,16 @@ try {
       $location->address()->setState($row['state']);
       $location->address()->setPostCode($row['postcode']);
       $location->setEmailAddress($row['email']);
+      $location->checklist()->selectAll($row['checklist_select_all']);
+
+      $query = $writeDB->prepare("SELECT `statement` FROM `checklist` WHERE account_id=:id");
+      $query->bindParam(':id', $query_id, PDO::PARAM_STR);
+      $query->execute();
+
+      $row_count = $query->rowCount();
+      if ($row_count > 0) 
+          while ($row = $query->fetch(PDO::FETCH_ASSOC)) 
+            $location->checklist()->addStatement($row['statement']);
 
       $response_data = [
         'name' => $location->getName(),
@@ -71,7 +81,9 @@ try {
         'suburb' => $location->address()->getSuburb(),
         'state' => $location->address()->getState(),
         'postcode' => $location->address()->getPostcode(),
-        'email' => $location->getEmailAddress()
+        'email' => $location->getEmailAddress(),
+        'selectAll' => $location->checklist()->canSelectAll(),
+        'statements' => $location->checklist()->toArray()
       ];
 
       $response = new Response();
@@ -87,7 +99,7 @@ try {
       $location->setID(intval($_GET['id']));
 
       $query_id = $location->getID();
-      $query = $writeDB->prepare("SELECT `business_name`, `avatar` FROM `accounts` WHERE id=:id");
+      $query = $writeDB->prepare("SELECT `business_name`, `avatar`, `checklist_select_all` FROM `accounts` WHERE id=:id");
       $query->bindParam(':id', $query_id, PDO::PARAM_STR);
       $query->execute();
       
@@ -104,10 +116,23 @@ try {
       $row = $query->fetch(PDO::FETCH_ASSOC);
       $location->setName($row['business_name']);
       $location->setAvatar($row['avatar']);
+      $location->checklist()->selectAll($row['checklist_select_all']);
+
+      $query = $writeDB->prepare("SELECT `statement` FROM `checklist` WHERE account_id=:id");
+      $query->bindParam(':id', $query_id, PDO::PARAM_STR);
+      $query->execute();
+
+      $row_count = $query->rowCount();
+      if ($row_count > 0) 
+          while ($row = $query->fetch(PDO::FETCH_ASSOC)) 
+            $location->checklist()->addStatement($row['statement']);
 
       $response_data = [
         'name' => $location->getName(),
-        'logo' => $location->getAvatar()
+        'logo' => $location->getAvatar(),
+        'checklist' => $location->checklist()->count(),
+        'selectAll' => $location->checklist()->canSelectAll(),
+        'statements' => $location->checklist()->toArray()
       ];
 
       $response = new Response();
