@@ -1,3 +1,9 @@
+/*
+SQLyog Community
+MySQL - 10.2.31-MariaDB-log-cll-lve : Database - simplepr_covid
+*********************************************************************
+*/
+
 /*!40101 SET NAMES utf8 */;
 
 /*!40101 SET SQL_MODE=''*/;
@@ -5,8 +11,6 @@
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-CREATE DATABASE /*!32312 IF NOT EXISTS*/`covid_register` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_bin */;
-
 /*Table structure for table `account_snapshots` */
 
 CREATE TABLE `account_snapshots` (
@@ -37,11 +41,23 @@ CREATE TABLE `accounts` (
   `postcode` char(4) COLLATE utf8mb4_bin NOT NULL,
   `email` varchar(255) COLLATE utf8mb4_bin NOT NULL,
   `ABN` bigint(11) DEFAULT NULL,
+  `checklist_select_all` tinyint(1) NOT NULL DEFAULT 0,
   `auth` varchar(255) COLLATE utf8mb4_bin NOT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `login_attempts` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+/*Table structure for table `checklist` */
+
+CREATE TABLE `checklist` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `account_id` bigint(20) NOT NULL,
+  `statement` varchar(255) COLLATE utf8mb4_bin NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `ACCOUNT` (`account_id`),
+  CONSTRAINT `Account Deletion` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 /*Table structure for table `contacts` */
 
@@ -52,8 +68,10 @@ CREATE TABLE `contacts` (
   `phone` char(12) COLLATE utf8mb4_bin NOT NULL DEFAULT '+61',
   `arr` datetime NOT NULL DEFAULT current_timestamp(),
   `dep` datetime DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=266 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+  PRIMARY KEY (`id`),
+  KEY `ACCOUNT_CONSTRAINT` (`account_id`),
+  CONSTRAINT `ACCOUNT_CONSTRAINT` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4267 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 /*Table structure for table `data_exports` */
 
@@ -70,13 +88,16 @@ CREATE TABLE `data_exports` (
 
 CREATE TABLE `follow_ons` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `account_id` bigint(20) NOT NULL,
   `type` int(11) NOT NULL,
   `text` varchar(511) COLLATE utf8mb4_bin DEFAULT NULL,
   `img` varchar(127) COLLATE utf8mb4_bin DEFAULT NULL,
   `url` varchar(255) COLLATE utf8mb4_bin NOT NULL,
   `expiry` timestamp NULL DEFAULT NULL ON UPDATE current_timestamp(),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+  PRIMARY KEY (`id`),
+  KEY `ACCOUNT_FOLLOWON` (`account_id`),
+  CONSTRAINT `ACCOUNT_FOLLOWON` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 /*Table structure for table `sessions` */
 
@@ -87,8 +108,10 @@ CREATE TABLE `sessions` (
   `access_token_expiry` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `refresh_token` varchar(100) COLLATE utf8mb4_bin NOT NULL,
   `refresh_token_expiry` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+  PRIMARY KEY (`id`),
+  KEY `ACCOUNT_SESSIONS` (`account_id`),
+  CONSTRAINT `ACCOUNT_SESSIONS` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
