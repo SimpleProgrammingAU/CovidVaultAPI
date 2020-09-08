@@ -10,6 +10,8 @@ The RESTful API that supports the CovidVault GUI.
 Returns the following account properties
 - `name` the business name
 - `logo` the stored logo filename (empty string if none available)
+- `selectAll` if a location has a conditions of entry checklist, permits the select all button
+- `statements` an array of prompts for the conditions of entry checklist
 
 ![Authenticated GET Endpoint](https://img.shields.io/badge/Authenticated-GET-green) https://root_address/account/[id](/ "Account ID")
 
@@ -23,6 +25,8 @@ Returns the following account properties
 - `state` state / province
 - `postcode` postal code
 - `email` email address of the authorised contact
+- `selectAll` if a location has a conditions of entry checklist, permits the select all button
+- `statements` an array of prompts for the conditions of entry checklist
 
 ![Public POST Endpoint](https://img.shields.io/badge/Public-POST-orange) https://root_address/account
 
