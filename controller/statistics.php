@@ -34,7 +34,7 @@ try {
     $statistics->location()->setID(intval($_GET['id']));
 
     $query_id = $statistics->location()->getID();
-    $query = $writeDB->prepare("SELECT weekday(arr) as `id`, COUNT(*) as `N` FROM `contacts` WHERE account_id = :id GROUP BY weekday(arr)");
+    $query = $writeDB->prepare("SELECT weekday(arr) as `id`, COUNT(DISTINCT DATE(`arr`)) as F, COUNT(*) as `N` FROM `contacts` WHERE account_id = :id GROUP BY weekday(arr)");
     $query->bindParam(':id', $query_id, PDO::PARAM_STR);
     $query->execute();
 

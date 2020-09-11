@@ -62,7 +62,7 @@ class Statistics
   public function importDay(array $data): bool
   {
     foreach ($data as $value) {
-      $this->_byDay[$value["id"]] = intval($value['N']);
+      $this->_byDay[$value["id"]] = intval($value['N']) / intval($value['F']);
     }
     return true;
   }
