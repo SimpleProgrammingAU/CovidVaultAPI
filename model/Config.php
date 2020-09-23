@@ -20,6 +20,15 @@ class Config {
     if (substr($pn, 3, 1) === "8" && ($vb < 25 || $vb > 26) && ($vb < 51 || $vb > 55) && $vb !== 58 && $vb < 60) return false; //SA/NT/WA Number confirmed
     return true; //Passed all validation
   }
+
+  public static function RegisterAPIAccess(int $id, string $endpoint) {
+    require_once("DB.php");
+    $writeDB = DB::connectWriteDB();
+    $query = $writeDB->prepare("INSERT INTO `actions`(`account_id`,`endpoint`) VALUES (:id, :e)");
+    $query->bindParam(':id', $id, PDO::PARAM_STR);
+    $query->bindParam(':e', $endpoint, PDO::PARAM_STR);
+    $query->execute();
+  }
 }
 
 class APIException extends Error {}
