@@ -321,7 +321,7 @@ try {
       $response->send();
       exit();
     }
-   } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+  } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
 
     if (!isset($_GET['id'])) {
       $response = new Response();
@@ -489,6 +489,33 @@ try {
       $response->send();
       exit();
     }
+
+  } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    
+    if (!isset($_GET['id'])) {
+      $response = new Response();
+      $response->setHttpStatusCode(400);
+      $response->setSuccess(false);
+      $response->addMessage("Error: request did not contain an account id.");
+      $response->send();
+      exit();
+    }
+
+    include('authenticate.php');
+
+    $location = new Location();
+    $location->setID($_GET['id']);
+    $query_id = $location->getID();
+    $query = $writeDB->prepare("DELETE FROM `accounts` WHERE id=:id");
+    $query->bindParam(':id', $query_id, PDO::PARAM_STR);
+    $query->execute();
+
+    $response = new Response();
+    $response->setHttpStatusCode(200);
+    $response->setSuccess(true);
+    $response->addMessage("Account successfully deleted.");
+    $response->send();
+    exit();
 
   } else {
     $response = new Response();

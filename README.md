@@ -44,12 +44,16 @@ Accepts the following account properties:
 - ![Required](https://img.shields.io/badge/-Required-red) `email`
 Data must be entered in format `application/json`.
 
-![Public POST Endpoint](https://img.shields.io/badge/Public-POST-orange) https://root_address/account/[id](/ "Account ID")
+![Authenticated POST Endpoint](https://img.shields.io/badge/Authenticated-POST-orange) https://root_address/account/[id](/ "Account ID")
 
 Permits the upload of a logo via the API. Accepts the following account properties:
 - ![Required](https://img.shields.io/badge/-Required-red) `logo`
 
 Data must be entered in format `multipart/form-data`.
+
+![Authenticated DELETE Endpoint](https://img.shields.io/badge/Authenticated-DELETE-red) https://root_address/account/[id](/ "Account ID")
+
+Deletes the account from the database.
 
 ### Entry
 ![Public POST Endpoint](https://img.shields.io/badge/Public-POST-orange) https://root_address/entry/[id](/ "Account ID")
