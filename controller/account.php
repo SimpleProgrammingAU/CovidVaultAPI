@@ -7,8 +7,7 @@ require_once '../model/Response.php';
 
 try {
   $writeDB = DB::connectWriteDB();
-}
-catch (PDOException $e) {
+} catch (PDOException $e) {
   error_log("Exception: " . $e->getMessage(), 0);
   $response = new Response();
   $response->setHttpStatusCode(500);
@@ -40,15 +39,15 @@ try {
       $query = $writeDB->prepare("SELECT `business_name`, `auth_contact`, `avatar`, `phone`, `street_address`, `suburb`, `state`, `postcode`, `email`, `checklist_select_all` FROM `accounts` WHERE id=:id");
       $query->bindParam(':id', $query_id, PDO::PARAM_STR);
       $query->execute();
-      
+
       $row_count = $query->rowCount();
       if ($row_count === 0) {
-          $response = new Response();
-          $response->setHttpStatusCode(409);
-          $response->setSuccess(false);
-          $response->addMessage("Error: venue account not found.");
-          $response->send();
-          exit();
+        $response = new Response();
+        $response->setHttpStatusCode(409);
+        $response->setSuccess(false);
+        $response->addMessage("Error: venue account not found.");
+        $response->send();
+        exit();
       }
 
       $row = $query->fetch(PDO::FETCH_ASSOC);
@@ -68,9 +67,9 @@ try {
       $query->execute();
 
       $row_count = $query->rowCount();
-      if ($row_count > 0) 
-          while ($row = $query->fetch(PDO::FETCH_ASSOC)) 
-            $location->checklist()->addStatement($row['statement']);
+      if ($row_count > 0)
+        while ($row = $query->fetch(PDO::FETCH_ASSOC))
+          $location->checklist()->addStatement($row['statement']);
 
       $response_data = [
         'name' => $location->getName(),
@@ -91,8 +90,8 @@ try {
       $response->setSuccess(true);
       $response->setData($response_data);
       $response->send();
+      Config::RegisterAPIAccess($query_id, "account");
       exit();
-
     } else {
 
       $location = new Location();
@@ -102,15 +101,17 @@ try {
       $query = $writeDB->prepare("SELECT `business_name`, `avatar`, `checklist_select_all` FROM `accounts` WHERE id=:id");
       $query->bindParam(':id', $query_id, PDO::PARAM_STR);
       $query->execute();
-      
+
       $row_count = $query->rowCount();
       if ($row_count === 0) {
-          $response = new Response();
-          $response->setHttpStatusCode(409);
-          $response->setSuccess(false);
-          $response->addMessage("Error: venue account not found.");
-          $response->send();
-          exit();
+        $response = new Response();
+        $response->setHttpStatusCode(409);
+        $response->setSuccess(false);
+        $response->addMessage("Error: venue account not found.");
+        $response->send();
+        Config::RegisterAPIAccess($query_id, "account");
+
+        exit();
       }
 
       $row = $query->fetch(PDO::FETCH_ASSOC);
@@ -123,9 +124,9 @@ try {
       $query->execute();
 
       $row_count = $query->rowCount();
-      if ($row_count > 0) 
-          while ($row = $query->fetch(PDO::FETCH_ASSOC)) 
-            $location->checklist()->addStatement($row['statement']);
+      if ($row_count > 0)
+        while ($row = $query->fetch(PDO::FETCH_ASSOC))
+          $location->checklist()->addStatement($row['statement']);
 
       $response_data = [
         'name' => $location->getName(),
@@ -140,9 +141,9 @@ try {
       $response->setSuccess(true);
       $response->setData($response_data);
       $response->send();
+      Config::RegisterAPIAccess($query_id, "account");
       exit();
     }
-
   } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && $_SERVER['CONTENT_TYPE'] === 'application/json') {
 
     $raw_post_data = file_get_contents('php://input');
@@ -193,12 +194,12 @@ try {
 
     $row_count = $query->rowCount();
     if ($row_count > 0) {
-        $response = new Response();
-        $response->setHttpStatusCode(409);
-        $response->setSuccess(false);
-        $response->addMessage("Error: email address already listed within the database.");
-        $response->send();
-        exit();
+      $response = new Response();
+      $response->setHttpStatusCode(409);
+      $response->setSuccess(false);
+      $response->addMessage("Error: email address already listed within the database.");
+      $response->send();
+      exit();
     }
 
     $passwordHash = password_hash($json_data->password, PASSWORD_DEFAULT);
@@ -257,7 +258,6 @@ try {
     $response->setData($response_data);
     $response->send();
     exit();
-  
   } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false) {
 
     include('authenticate.php');
@@ -276,7 +276,7 @@ try {
 
     $target_file = "../../images/logo-" . $location->getID() . "." . strtolower(pathinfo($_FILES["logo"]["name"], PATHINFO_EXTENSION));
     $check = getimagesize($_FILES["logo"]["tmp_name"]);
-    if($check !== false) {
+    if ($check !== false) {
 
       if (!move_uploaded_file($_FILES["logo"]["tmp_name"], $target_file)) {
         $response = new Response();
@@ -301,6 +301,7 @@ try {
         $response->setSuccess(false);
         $response->addMessage("Error: venue account not found.");
         $response->send();
+        Config::RegisterAPIAccess($query_id, "account");
         exit();
       }
 
@@ -309,8 +310,8 @@ try {
       $response->setSuccess(true);
       $response->addMessage("Logo successfully updated.");
       $response->send();
+      Config::RegisterAPIAccess($query_id, "account");
       exit();
-
     } else {
       $response = new Response();
       $response->setHttpStatusCode(400);
@@ -319,6 +320,7 @@ try {
       $response->addMessage("Filetype: " . $_FILES["logo"]["tmp_name"]);
       $response->setData(json_encode(["data" => $raw_post_data]));
       $response->send();
+      Config::RegisterAPIAccess($query_id, "account");
       exit();
     }
   } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
@@ -338,149 +340,149 @@ try {
 
       $raw_post_data = file_get_contents('php://input');
 
-    if (!$json_data = json_decode($raw_post_data)) {
-      $response = new Response();
-      $response->setHttpStatusCode(400);
-      $response->setSuccess(false);
-      $response->addMessage("Error: request body is not valid JSON.");
-      $response->send();
-      exit();
-    }
-
-    if (isset($json_data->password)) {
-
-      if (!isset($json_data->password, $json_data->newPassword)) {
+      if (!$json_data = json_decode($raw_post_data)) {
         $response = new Response();
         $response->setHttpStatusCode(400);
         $response->setSuccess(false);
-        (!isset($json_data->password) ? $response->addMessage("Error: request body does not contain an original password.") : false);
-        (!isset($json_data->newPassword) ? $response->addMessage("Error: request body does not contain a new password.") : false);
+        $response->addMessage("Error: request body is not valid JSON.");
         $response->send();
         exit();
       }
 
-      $query_id = $_GET['id'];
-      $password = $json_data->password;
-      $query_auth = password_hash($json_data->newPassword, PASSWORD_DEFAULT);
-      $query = $writeDB->prepare("SELECT auth FROM accounts WHERE id = :id");
-      $query->bindParam(':id', $query_id, PDO::PARAM_STR);
-      $query->execute();
+      if (isset($json_data->password)) {
 
-      $row_count = $query->rowCount();
-      if ($row_count === 0) {
-        $response = new Response();
-        $response->setHttpStatusCode(404);
-        $response->setSuccess(false);
-        $response->addMessage("Error: account not found.");
-        $response->send();
-        exit();
-      }
+        if (!isset($json_data->password, $json_data->newPassword)) {
+          $response = new Response();
+          $response->setHttpStatusCode(400);
+          $response->setSuccess(false);
+          (!isset($json_data->password) ? $response->addMessage("Error: request body does not contain an original password.") : false);
+          (!isset($json_data->newPassword) ? $response->addMessage("Error: request body does not contain a new password.") : false);
+          $response->send();
+          exit();
+        }
 
-      $row = $query->fetch(PDO::FETCH_ASSOC);
-      if (!password_verify($password, $row['auth'])) {
-        $response = new Response();
-        $response->setHttpStatusCode(401);
-        $response->setSuccess(false);
-        $response->addMessage("Error: original password is incorrect.");
-        $response->send();
-        exit();
-      }
+        $query_id = $_GET['id'];
+        $password = $json_data->password;
+        $query_auth = password_hash($json_data->newPassword, PASSWORD_DEFAULT);
+        $query = $writeDB->prepare("SELECT auth FROM accounts WHERE id = :id");
+        $query->bindParam(':id', $query_id, PDO::PARAM_STR);
+        $query->execute();
 
-      $query = $writeDB->prepare("UPDATE accounts SET `auth`=:auth WHERE id=:id");
-      $query->bindParam(":id", $query_id, PDO::PARAM_STR);
-      $query->bindParam(":auth", $query_auth, PDO::PARAM_STR);
-      $query->execute();
+        $row_count = $query->rowCount();
+        if ($row_count === 0) {
+          $response = new Response();
+          $response->setHttpStatusCode(404);
+          $response->setSuccess(false);
+          $response->addMessage("Error: account not found.");
+          $response->send();
+          exit();
+        }
 
-      $row_count = $query->rowCount();
-      if ($row_count === 0) {
-        $response = new Response();
-        $response->setHttpStatusCode(500);
-        $response->setSuccess(false);
-        $response->addMessage("Error: Password not updated.");
-        $response->send();
-        exit();
-      }
+        $row = $query->fetch(PDO::FETCH_ASSOC);
+        if (!password_verify($password, $row['auth'])) {
+          $response = new Response();
+          $response->setHttpStatusCode(401);
+          $response->setSuccess(false);
+          $response->addMessage("Error: original password is incorrect.");
+          $response->send();
+          Config::RegisterAPIAccess($query_id, "account");
+          exit();
+        }
 
-    } else {
+        $query = $writeDB->prepare("UPDATE accounts SET `auth`=:auth WHERE id=:id");
+        $query->bindParam(":id", $query_id, PDO::PARAM_STR);
+        $query->bindParam(":auth", $query_auth, PDO::PARAM_STR);
+        $query->execute();
 
-      if (!isset($json_data->businessName, $json_data->authContact, $json_data->email, $json_data->phone, $json_data->streetAddress, $json_data->suburb, $json_data->state, $json_data->postcode)) {
-        $response = new Response();
-        $response->setHttpStatusCode(400);
-        $response->setSuccess(false);
-        (!isset($json_data->businessName) ? $response->addMessage("Error: request body does not contain a business name.") : false);
-        (!isset($json_data->authContact) ? $response->addMessage("Error: request body does not contain an authorised contact.") : false);
-        (!isset($json_data->email) ? $response->addMessage("Error: request body does not contain an email address.") : false);
-        (!isset($json_data->phone) ? $response->addMessage("Error: request body does not contain a contact phone number.") : false);
-        (!isset($json_data->streetAddress) ? $response->addMessage("Error: request body does not contain a street address.") : false);
-        (!isset($json_data->suburb) ? $response->addMessage("Error: request body does not contain a suburb name.") : false);
-        (!isset($json_data->state) ? $response->addMessage("Error: request body does not contain a state name.") : false);
-        (!isset($json_data->postcode) ? $response->addMessage("Error: request body does not contain a postcode.") : false);
-        $response->send();
-        exit();
-      }
+        $row_count = $query->rowCount();
+        if ($row_count === 0) {
+          $response = new Response();
+          $response->setHttpStatusCode(500);
+          $response->setSuccess(false);
+          $response->addMessage("Error: Password not updated.");
+          $response->send();
+          exit();
+        }
+      } else {
 
-      $location = new Location();
-      $location->setID($_GET['id']);
-      $location->setName(trim($json_data->businessName));
-      $location->setAuthContact(trim($json_data->authContact));
-      $location->setPhoneNumber(trim($json_data->phone));
-      $location->address()->setStreetAddress(trim($json_data->streetAddress));
-      $location->address()->setSuburb(trim($json_data->suburb));
-      $location->address()->setState(trim($json_data->state));
-      $location->address()->setPostCode(trim($json_data->postcode));
-      $location->setEmailAddress(trim($json_data->email));
-      if (isset($json_data->abn)) $location->setABN(trim($json_data->abn));
+        if (!isset($json_data->businessName, $json_data->authContact, $json_data->email, $json_data->phone, $json_data->streetAddress, $json_data->suburb, $json_data->state, $json_data->postcode)) {
+          $response = new Response();
+          $response->setHttpStatusCode(400);
+          $response->setSuccess(false);
+          (!isset($json_data->businessName) ? $response->addMessage("Error: request body does not contain a business name.") : false);
+          (!isset($json_data->authContact) ? $response->addMessage("Error: request body does not contain an authorised contact.") : false);
+          (!isset($json_data->email) ? $response->addMessage("Error: request body does not contain an email address.") : false);
+          (!isset($json_data->phone) ? $response->addMessage("Error: request body does not contain a contact phone number.") : false);
+          (!isset($json_data->streetAddress) ? $response->addMessage("Error: request body does not contain a street address.") : false);
+          (!isset($json_data->suburb) ? $response->addMessage("Error: request body does not contain a suburb name.") : false);
+          (!isset($json_data->state) ? $response->addMessage("Error: request body does not contain a state name.") : false);
+          (!isset($json_data->postcode) ? $response->addMessage("Error: request body does not contain a postcode.") : false);
+          $response->send();
+          exit();
+        }
 
-      $query_id = $location->getID();
-      $query_abn = $location->getABN();
-      $query_contact = $location->getAuthorisedContact();
-      $query_name = $location->getName();
-      $query_email = $location->getEmailAddress();
-      $query_phone = $location->getPhoneNumber();
-      $query_postcode = $location->address()->getPostcode();
-      $query_state = $location->address()->getState();
-      $query_address = $location->address()->getStreetAddress();
-      $query_suburb = $location->address()->getSuburb();
-      $query = $writeDB->prepare("UPDATE `accounts` SET ABN=:abn, auth_contact=:authContact, business_name=:business, email=:email,
+        $location = new Location();
+        $location->setID($_GET['id']);
+        $location->setName(trim($json_data->businessName));
+        $location->setAuthContact(trim($json_data->authContact));
+        $location->setPhoneNumber(trim($json_data->phone));
+        $location->address()->setStreetAddress(trim($json_data->streetAddress));
+        $location->address()->setSuburb(trim($json_data->suburb));
+        $location->address()->setState(trim($json_data->state));
+        $location->address()->setPostCode(trim($json_data->postcode));
+        $location->setEmailAddress(trim($json_data->email));
+        if (isset($json_data->abn)) $location->setABN(trim($json_data->abn));
+
+        $query_id = $location->getID();
+        $query_abn = $location->getABN();
+        $query_contact = $location->getAuthorisedContact();
+        $query_name = $location->getName();
+        $query_email = $location->getEmailAddress();
+        $query_phone = $location->getPhoneNumber();
+        $query_postcode = $location->address()->getPostcode();
+        $query_state = $location->address()->getState();
+        $query_address = $location->address()->getStreetAddress();
+        $query_suburb = $location->address()->getSuburb();
+        $query = $writeDB->prepare("UPDATE `accounts` SET ABN=:abn, auth_contact=:authContact, business_name=:business, email=:email,
         phone=:phone, postcode=:postcode, `state`=:state, street_address=:address, suburb=:suburb WHERE id=:id");
-      $query->bindParam(':id', $query_id, PDO::PARAM_STR);
-      $query->bindParam(':abn', $query_abn, PDO::PARAM_STR);
-      $query->bindParam(':authContact', $query_contact, PDO::PARAM_STR);
-      $query->bindParam(':business', $query_name, PDO::PARAM_STR);
-      $query->bindParam(':email', $query_email, PDO::PARAM_STR);
-      $query->bindParam(':phone', $query_phone, PDO::PARAM_STR);
-      $query->bindParam(':postcode', $query_postcode, PDO::PARAM_STR);
-      $query->bindParam(':state', $query_state, PDO::PARAM_STR);
-      $query->bindParam(':address', $query_address, PDO::PARAM_STR);
-      $query->bindParam(':suburb', $query_suburb, PDO::PARAM_STR);
-      $query->execute();
+        $query->bindParam(':id', $query_id, PDO::PARAM_STR);
+        $query->bindParam(':abn', $query_abn, PDO::PARAM_STR);
+        $query->bindParam(':authContact', $query_contact, PDO::PARAM_STR);
+        $query->bindParam(':business', $query_name, PDO::PARAM_STR);
+        $query->bindParam(':email', $query_email, PDO::PARAM_STR);
+        $query->bindParam(':phone', $query_phone, PDO::PARAM_STR);
+        $query->bindParam(':postcode', $query_postcode, PDO::PARAM_STR);
+        $query->bindParam(':state', $query_state, PDO::PARAM_STR);
+        $query->bindParam(':address', $query_address, PDO::PARAM_STR);
+        $query->bindParam(':suburb', $query_suburb, PDO::PARAM_STR);
+        $query->execute();
 
-      $row_count = $query->rowCount();
-      if ($row_count === 0) {
-        $response = new Response();
-        $response->setHttpStatusCode(404);
-        $response->setSuccess(false);
-        $response->addMessage("Error: account not found.");
-        $response->send();
-        exit();
+        $row_count = $query->rowCount();
+        if ($row_count === 0) {
+          $response = new Response();
+          $response->setHttpStatusCode(404);
+          $response->setSuccess(false);
+          $response->addMessage("Error: account not found.");
+          $response->send();
+          exit();
+        }
+
+        $response_data = [];
+        $response_data['id'] = $query_id;
+        $response_data['name'] = $query_name;
+        $response_data['authorisedContact'] = $query_contact;
+        $response_data['contactPhone'] = $query_phone;
+        $response_data['contactEmail'] = $query_email;
       }
 
-      $response_data = [];
-      $response_data['id'] = $query_id;
-      $response_data['name'] = $query_name;
-      $response_data['authorisedContact'] = $query_contact;
-      $response_data['contactPhone'] = $query_phone;
-      $response_data['contactEmail'] = $query_email;
-    }
-
-    $response = new Response();
-    $response->setHttpStatusCode(200);
-    $response->setSuccess(true);
-    $response->addMessage("Account successfully updated.");
-    $response->setData($response_data);
-    $response->send();
-    exit();
-
+      $response = new Response();
+      $response->setHttpStatusCode(200);
+      $response->setSuccess(true);
+      $response->addMessage("Account successfully updated.");
+      $response->setData($response_data);
+      $response->send();
+      Config::RegisterAPIAccess($query_id, "account");
+      exit();
     } else {
       $response = new Response();
       $response->setHttpStatusCode(400);
@@ -525,25 +527,22 @@ try {
     $response->send();
     exit();
   }
-}
-catch (PDOException $e) {
-    error_log("Exception: " . $e->getMessage());
-    $response = new Response();
-    $response->setHttpStatusCode(500);
-    $response->setSuccess(false);
-    $response->addMessage("Error: database error.");
-    $response->send();
-    exit();
-}
-catch (APIException $e) {
+} catch (PDOException $e) {
+  error_log("Exception: " . $e->getMessage());
+  $response = new Response();
+  $response->setHttpStatusCode(500);
+  $response->setSuccess(false);
+  $response->addMessage("Error: database error.");
+  $response->send();
+  exit();
+} catch (APIException $e) {
   $response = new Response();
   $response->setHttpStatusCode(400);
   $response->setSuccess(false);
   $response->addMessage("API Error: " . $e->getMessage());
   $response->send();
   exit();
-}
-catch (Error $e) {
+} catch (Error $e) {
   error_log("Exception: " . $e->getMessage());
   $response = new Response();
   $response->setHttpStatusCode(500);

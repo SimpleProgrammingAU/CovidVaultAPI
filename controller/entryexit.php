@@ -86,6 +86,7 @@ try {
     $response->setData(["id" => $writeDB->lastInsertId()]);
     $response->addMessage("Visitor successfully checked in.");
     $response->send();
+    Config::RegisterAPIAccess($query_id, "entry");
     exit();
 
   } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH' && array_key_exists('v', $_GET)) { //EXIT
@@ -130,6 +131,7 @@ try {
     $response->setSuccess(true);
     $response->addMessage("Visitor successfully checked out.");
     $response->send();
+    Config::RegisterAPIAccess($query_id, "exit");
     exit();
 
   } else {

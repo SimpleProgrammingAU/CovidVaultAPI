@@ -89,6 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $response->addMessage("Data export query successful.");
     $response->setData($query->fetchAll());
     $response->send();
+    Config::RegisterAPIAccess($query_id, "export");
     exit();
 
   }catch (PDOException $e) {
