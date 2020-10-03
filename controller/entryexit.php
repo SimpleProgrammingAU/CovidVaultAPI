@@ -86,7 +86,7 @@ try {
     $response->setData(["id" => $writeDB->lastInsertId()]);
     $response->addMessage("Visitor successfully checked in.");
     $response->send();
-    Config::RegisterAPIAccess($query_id, "entry");
+    Config::RegisterAPIAccess($query_account_id, "entry");
     exit();
 
   } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH' && array_key_exists('v', $_GET)) { //EXIT
@@ -111,6 +111,7 @@ try {
       exit();
     }
 
+    $query_account_id = $query->fetch(PDO::FETCH_ASSOC)['account_id'];
     $query = $writeDB->prepare("UPDATE `contacts` SET `dep`=:dep WHERE id=:id");
     $query->bindParam(':id', $query_id, PDO::PARAM_INT);
     $query->bindParam(':dep', $query_dep, PDO::PARAM_INT);
@@ -131,7 +132,7 @@ try {
     $response->setSuccess(true);
     $response->addMessage("Visitor successfully checked out.");
     $response->send();
-    Config::RegisterAPIAccess($query_id, "exit");
+    Config::RegisterAPIAccess($query_account_id, "exit");
     exit();
 
   } else {

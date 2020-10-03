@@ -20,11 +20,11 @@ class FollowOn
   /**
    * @var string
    */
-  private $_img;
-  /**
-   * @var string
-   */
   private $_url;
+  /**
+   * @var DateTime
+   */
+  private $_start;
   /**
    * @var DateTime
    */
@@ -37,7 +37,9 @@ class FollowOn
   {
     $this->_id = -1;
     $this->_type = self::DEFAULT;
-    $this->_img = $this->_text = $this->_url = "";
+    $this->_text = $this->_url = "";
+    $this->_start = new DateTime();
+    $this->_expiry = new DateTime("2030-12-31 23:59:59");
   }
 
   public function getID(): int
@@ -52,13 +54,14 @@ class FollowOn
   {
     return $this->_text;
   }
-  public function getImg(): string
-  {
-    return $this->_img;
-  }
   public function getURL(): string
   {
     return $this->_url;
+  }
+  public function getStart()
+  {
+    if (isset($this->_start)) return $this->_start->format("Y-m-d");
+    else return null;
   }
   public function getExpiry()
   {
@@ -87,19 +90,21 @@ class FollowOn
     return true;
   }
 
-  public function setImg(string $file): bool
-  {
-    if (!is_string($file) || $file !== '' && preg_match('/^(?:(?<scheme>[^:\/?#]+):)?(?:\/\/(?<authority>[^\/?#]*))?(?<path>[^?#]*\/)?(?<file>[^?#]*\.(?<extension>[Jj][Pp][Ee]?[Gg]|[Pp][Nn][Gg]|[Gg][Ii][Ff]|[Ss][Vv][Gg]))(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/', $file) !== 1) throw new APIException("Avatar filename should point to a valid image file.");
-    $this->_img = $file;
-    return true;
-  }
-
   public function setURL(string $url): bool
   {
     if (filter_var($url, FILTER_VALIDATE_URL) !== false) {
       $this->_url = $url;
       return true;
     } else return false;
+  }
+
+  public function setStart(string $date): bool
+  {
+    if (strlen($date) === 0) return false;
+    $datetime = date_create($date);
+    if ($datetime === false) throw new APIException("Date format not recognised.");
+    $this->_start = $datetime;
+    return true;
   }
 
   public function setExpiry(string $date): bool

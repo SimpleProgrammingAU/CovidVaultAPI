@@ -9,7 +9,7 @@ The RESTful API that supports the CovidVault GUI.
 
 Returns the following account properties
 - `name` the business name
-- `logo` the stored logo filename (empty string if none available)
+- `avatar` boolean value representing the presence of a logo in the database
 - `selectAll` if a location has a conditions of entry checklist, permits the select all button
 - `statements` an array of prompts for the conditions of entry checklist
 

@@ -19,7 +19,7 @@ class Location {
    */
   private $_auth_contact;
   /**
-   * @var string 
+   * @var bool 
    */
   private $_avatar;
   /**
@@ -48,7 +48,8 @@ class Location {
   private $_checklist;
 
   public function __construct() {
-    $this->_id = $this->_name = $this->_auth_contact = $this->_avatar = $this->_phone_number = $this->_email = $this->_abn = null;
+    $this->_id = $this->_name = $this->_auth_contact = $this->_phone_number = $this->_email = $this->_abn = null;
+    $this->_avatar = false;
     $this->_address = new Address();
     $this->_follow_on = new FollowOn();
     $this->_checklist = new Checklist();
@@ -57,7 +58,7 @@ class Location {
   public function getID():int { return $this->_id; }
   public function getName():string { return $this->_name; }
   public function getAuthorisedContact():string { return $this->_auth_contact; }
-  public function getAvatar():string { return strval($this->_avatar); }
+  public function getAvatar():bool { return $this->_avatar; }
   public function getPhoneNumber():string { return $this->_phone_number; }
   public function getEmailAddress():string { return $this->_email; }
   public function address():Address { return $this->_address; }
@@ -84,9 +85,8 @@ class Location {
     return true;
   }
 
-  public function setAvatar(string $file):bool {
-    if (!is_string($file) || $file !== '' && preg_match('/^(?:(?<scheme>[^:\/?#]+):)?(?:\/\/(?<authority>[^\/?#]*))?(?<path>[^?#]*\/)?(?<file>[^?#]*\.(?<extension>[Jj][Pp][Ee]?[Gg]|[Pp][Nn][Gg]|[Gg][Ii][Ff]|[Ss][Vv][Gg]))(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/', $file) !== 1) throw new APIException("Avatar filename should point to a valid image file."); 
-    $this->_avatar = $file;
+  public function setAvatar(bool $has_avatar):bool {
+    $this->_avatar = $has_avatar;
     return true;
   }
 

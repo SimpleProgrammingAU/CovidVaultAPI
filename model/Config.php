@@ -29,6 +29,13 @@ class Config {
     $query->bindParam(':e', $endpoint, PDO::PARAM_STR);
     $query->execute();
   }
+
+  public static function ShortnameGenerator(string $name) {
+    $name_arr = array_fill(0, 5, $name);
+    $patterns = ['/[A-Z]/', '/[A-Z][^aeiou]?/', '/[A-Z][^aeiou]*/', '/[A-Z][a-z]/', '/[A-Z][aeiouAEIOU]?/'];
+    $replace = ['$0$1$2$3$4$5'];
+    return preg_replace($patterns, $replace, $name_arr);
+  }
 }
 
 class APIException extends Error {}

@@ -36,7 +36,7 @@ try {
       $location->setID(intval($_GET['id']));
 
       $query_id = $location->getID();
-      $query = $writeDB->prepare("SELECT `business_name`, `auth_contact`, `avatar`, `phone`, `street_address`, `suburb`, `state`, `postcode`, `email`, `checklist_select_all` FROM `accounts` WHERE id=:id");
+      $query = $writeDB->prepare("SELECT `business_name`, `auth_contact`, `avatar_mime`, `phone`, `street_address`, `suburb`, `state`, `postcode`, `email`, `checklist_select_all` FROM `accounts` WHERE id=:id");
       $query->bindParam(':id', $query_id, PDO::PARAM_STR);
       $query->execute();
 
@@ -53,7 +53,7 @@ try {
       $row = $query->fetch(PDO::FETCH_ASSOC);
       $location->setName($row['business_name']);
       $location->setAuthContact($row['auth_contact']);
-      $location->setAvatar($row['avatar']);
+      $location->setAvatar(strlen($row['avatar_mime']) > 0);
       $location->setPhoneNumber($row['phone']);
       $location->address()->setStreetAddress($row['street_address']);
       $location->address()->setSuburb($row['suburb']);
@@ -98,7 +98,7 @@ try {
       $location->setID(intval($_GET['id']));
 
       $query_id = $location->getID();
-      $query = $writeDB->prepare("SELECT `business_name`, `avatar`, `checklist_select_all` FROM `accounts` WHERE id=:id");
+      $query = $writeDB->prepare("SELECT `business_name`, `avatar_mime`, `checklist_select_all` FROM `accounts` WHERE id=:id");
       $query->bindParam(':id', $query_id, PDO::PARAM_STR);
       $query->execute();
 
@@ -110,13 +110,12 @@ try {
         $response->addMessage("Error: venue account not found.");
         $response->send();
         Config::RegisterAPIAccess($query_id, "account");
-
         exit();
       }
 
       $row = $query->fetch(PDO::FETCH_ASSOC);
       $location->setName($row['business_name']);
-      $location->setAvatar($row['avatar']);
+      $location->setAvatar(strlen($row['avatar_mime']) > 0);
       $location->checklist()->selectAll($row['checklist_select_all']);
 
       $query = $writeDB->prepare("SELECT `statement` FROM `checklist` WHERE account_id=:id");
@@ -130,7 +129,7 @@ try {
 
       $response_data = [
         'name' => $location->getName(),
-        'logo' => $location->getAvatar(),
+        'avatar' => $location->getAvatar(),
         'checklist' => $location->checklist()->count(),
         'selectAll' => $location->checklist()->canSelectAll(),
         'statements' => $location->checklist()->toArray()
@@ -202,6 +201,8 @@ try {
       exit();
     }
 
+    //TODO - insert shortname generator here
+
     $passwordHash = password_hash($json_data->password, PASSWORD_DEFAULT);
 
     $query_id = $location->getID();
@@ -260,10 +261,17 @@ try {
     exit();
   } elseif ($_SERVER['REQUEST_METHOD'] === 'POST' && strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data') !== false) {
 
-    include('authenticate.php');
-
     $location = new Location();
     $location->setID(intval($_GET['id']));
+
+    if (!isset($_FILES['logo'])) {
+      $response = new Response();
+      $response->setHttpStatusCode(400);
+      $response->setSuccess(false);
+      $response->addMessage("Error: no image file received.");
+      $response->send();
+      exit();
+    }
 
     if ($_FILES["logo"]["size"] > 500000) {
       $response = new Response();
@@ -274,25 +282,30 @@ try {
       exit();
     }
 
-    $target_file = "../../images/logo-" . $location->getID() . "." . strtolower(pathinfo($_FILES["logo"]["name"], PATHINFO_EXTENSION));
     $check = getimagesize($_FILES["logo"]["tmp_name"]);
-    if ($check !== false) {
+    if (!$check) {
+      $response = new Response();
+      $response->setHttpStatusCode(400);
+      $response->setSuccess(false);
+      $response->addMessage("Error: invalid or corrupt image file received.");
+      $response->send();
+      exit();
+    }
 
-      if (!move_uploaded_file($_FILES["logo"]["tmp_name"], $target_file)) {
-        $response = new Response();
-        $response->setHttpStatusCode(500);
-        $response->setSuccess(false);
-        $response->addMessage("Error: unknown issue while uploading logo.");
-        $response->send();
-        exit();
-      }
+    $image = $_FILES['logo']['tmp_name'];
+    $img_stream = fopen($image, 'rb');
+    $img_mime = mime_content_type($image);
 
-      $query_logo = substr($target_file, 13);
-      $query_id = $location->getID();
-      $query = $writeDB->prepare("UPDATE `accounts` SET `avatar` = :logo WHERE id=:id");
-      $query->bindParam(':logo', $query_logo, PDO::PARAM_STR);
-      $query->bindParam(':id', $query_id, PDO::PARAM_STR);
-      $query->execute();
+    include('authenticate.php');
+    $query_id = $location->getID();
+    $query_img = (isset($img_stream) ? $img_stream : null);
+    $query_mime = (isset($img_mime) ? $img_mime : "");
+
+    $query = $writeDB->prepare("UPDATE `accounts` SET `avatar`=:img, `avatar_mime`=:mime WHERE id=:id");
+    $query->bindParam(':img', $query_img, PDO::PARAM_LOB);
+    $query->bindParam(':mime', $query_mime, PDO::PARAM_STR);
+    $query->bindParam(':id', $query_id, PDO::PARAM_STR);
+    $query->execute();
 
       $row_count = $query->rowCount();
       if ($row_count === 0) {
@@ -312,17 +325,7 @@ try {
       $response->send();
       Config::RegisterAPIAccess($query_id, "account");
       exit();
-    } else {
-      $response = new Response();
-      $response->setHttpStatusCode(400);
-      $response->setSuccess(false);
-      $response->addMessage("Error: Logo image data in unexpected format.");
-      $response->addMessage("Filetype: " . $_FILES["logo"]["tmp_name"]);
-      $response->setData(json_encode(["data" => $raw_post_data]));
-      $response->send();
-      Config::RegisterAPIAccess($query_id, "account");
-      exit();
-    }
+
   } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
 
     if (!isset($_GET['id'])) {
@@ -403,58 +406,74 @@ try {
           $response->send();
           exit();
         }
-      } else {
 
-        if (!isset($json_data->businessName, $json_data->authContact, $json_data->email, $json_data->phone, $json_data->streetAddress, $json_data->suburb, $json_data->state, $json_data->postcode)) {
-          $response = new Response();
-          $response->setHttpStatusCode(400);
-          $response->setSuccess(false);
-          (!isset($json_data->businessName) ? $response->addMessage("Error: request body does not contain a business name.") : false);
-          (!isset($json_data->authContact) ? $response->addMessage("Error: request body does not contain an authorised contact.") : false);
-          (!isset($json_data->email) ? $response->addMessage("Error: request body does not contain an email address.") : false);
-          (!isset($json_data->phone) ? $response->addMessage("Error: request body does not contain a contact phone number.") : false);
-          (!isset($json_data->streetAddress) ? $response->addMessage("Error: request body does not contain a street address.") : false);
-          (!isset($json_data->suburb) ? $response->addMessage("Error: request body does not contain a suburb name.") : false);
-          (!isset($json_data->state) ? $response->addMessage("Error: request body does not contain a state name.") : false);
-          (!isset($json_data->postcode) ? $response->addMessage("Error: request body does not contain a postcode.") : false);
-          $response->send();
-          exit();
-        }
+        $response_data = [];
+      } else {
 
         $location = new Location();
         $location->setID($_GET['id']);
-        $location->setName(trim($json_data->businessName));
-        $location->setAuthContact(trim($json_data->authContact));
-        $location->setPhoneNumber(trim($json_data->phone));
-        $location->address()->setStreetAddress(trim($json_data->streetAddress));
-        $location->address()->setSuburb(trim($json_data->suburb));
-        $location->address()->setState(trim($json_data->state));
-        $location->address()->setPostCode(trim($json_data->postcode));
-        $location->setEmailAddress(trim($json_data->email));
-        if (isset($json_data->abn)) $location->setABN(trim($json_data->abn));
+        (isset($json_data->businessName) ? $location->setName(trim($json_data->businessName)) : false);
+        (isset($json_data->authContact) ? $location->setAuthContact(trim($json_data->authContact)) : false);
+        (isset($json_data->phone) ? $location->setPhoneNumber(trim($json_data->phone)) : false);
+        (isset($json_data->streetAddress) ? $location->address()->setStreetAddress(trim($json_data->streetAddress)) : false);
+        (isset($json_data->suburb) ? $location->address()->setSuburb(trim($json_data->suburb)) : false);
+        (isset($json_data->state) ? $location->address()->setState(trim($json_data->state)) : false);
+        (isset($json_data->postcode) ? $location->address()->setPostCode(trim($json_data->postcode)) : false);
+        (isset($json_data->email) ? $location->setEmailAddress(trim($json_data->email)) : false);
+        (isset($json_data->abn) ? $location->setABN(trim($json_data->abn)) : false);
 
         $query_id = $location->getID();
-        $query_abn = $location->getABN();
-        $query_contact = $location->getAuthorisedContact();
-        $query_name = $location->getName();
-        $query_email = $location->getEmailAddress();
-        $query_phone = $location->getPhoneNumber();
-        $query_postcode = $location->address()->getPostcode();
-        $query_state = $location->address()->getState();
-        $query_address = $location->address()->getStreetAddress();
-        $query_suburb = $location->address()->getSuburb();
-        $query = $writeDB->prepare("UPDATE `accounts` SET ABN=:abn, auth_contact=:authContact, business_name=:business, email=:email,
-        phone=:phone, postcode=:postcode, `state`=:state, street_address=:address, suburb=:suburb WHERE id=:id");
+        $set_columns = "";
+        if (isset($json_data->abn)) {
+          $query_abn = $location->getABN();
+          $set_columns .= "ABN=:abn, ";
+        }
+        if (isset($json_data->authContact)) {
+          $query_contact = $location->getAuthorisedContact();
+          $set_columns .= "auth_contact=:authContact, ";
+        }
+        if (isset($json_data->businessName)) {
+          $query_name = $location->getName();
+          $set_columns .= "business_name=:business, ";
+        }
+        if (isset($json_data->email)) {
+          $query_email = $location->getEmailAddress();
+          $set_columns .= "email=:email, ";
+        }
+        if (isset($json_data->phone)) {
+          $query_phone = $location->getPhoneNumber();
+          $set_columns .= "phone=:phone, ";
+        }
+        if (isset($json_data->postcode)) {
+          $query_postcode = $location->address()->getPostcode();
+          $set_columns .= "postcode=:postcode, ";
+        }
+        if (isset($json_data->state)) {
+          $query_state = $location->address()->getState();
+          $set_columns .= "`state`=:state, ";
+        }
+        if (isset($json_data->streetAddress)) {
+          $query_address = $location->address()->getStreetAddress();
+          $set_columns .= "street_address=:address, ";
+        }
+        if (isset($json_data->suburb)) {
+          $query_suburb = $location->address()->getSuburb();
+          $set_columns .= "suburb=:suburb, ";
+        }
+
+        $set_columns = substr($set_columns, 0, -2);
+
+        $query = $writeDB->prepare("UPDATE `accounts` SET $set_columns WHERE id=:id");
         $query->bindParam(':id', $query_id, PDO::PARAM_STR);
-        $query->bindParam(':abn', $query_abn, PDO::PARAM_STR);
-        $query->bindParam(':authContact', $query_contact, PDO::PARAM_STR);
-        $query->bindParam(':business', $query_name, PDO::PARAM_STR);
-        $query->bindParam(':email', $query_email, PDO::PARAM_STR);
-        $query->bindParam(':phone', $query_phone, PDO::PARAM_STR);
-        $query->bindParam(':postcode', $query_postcode, PDO::PARAM_STR);
-        $query->bindParam(':state', $query_state, PDO::PARAM_STR);
-        $query->bindParam(':address', $query_address, PDO::PARAM_STR);
-        $query->bindParam(':suburb', $query_suburb, PDO::PARAM_STR);
+        (isset($query_abn) ? $query->bindParam(':abn', $query_abn, PDO::PARAM_STR) : false);
+        (isset($query_contact) ? $query->bindParam(':authContact', $query_contact, PDO::PARAM_STR) : false);
+        (isset($query_name) ? $query->bindParam(':business', $query_name, PDO::PARAM_STR) : false);
+        (isset($query_email) ? $query->bindParam(':email', $query_email, PDO::PARAM_STR) : false);
+        (isset($query_phone) ? $query->bindParam(':phone', $query_phone, PDO::PARAM_STR) : false);
+        (isset($query_postcode) ? $query->bindParam(':postcode', $query_postcode, PDO::PARAM_STR) : false);
+        (isset($query_state) ? $query->bindParam(':state', $query_state, PDO::PARAM_STR) : false);
+        (isset($query_address) ? $query->bindParam(':address', $query_address, PDO::PARAM_STR) : false);
+        (isset($query_suburb) ? $query->bindParam(':suburb', $query_suburb, PDO::PARAM_STR) : false);
         $query->execute();
 
         $row_count = $query->rowCount();
@@ -469,10 +488,15 @@ try {
 
         $response_data = [];
         $response_data['id'] = $query_id;
-        $response_data['name'] = $query_name;
-        $response_data['authorisedContact'] = $query_contact;
-        $response_data['contactPhone'] = $query_phone;
-        $response_data['contactEmail'] = $query_email;
+        (isset($query_abn) ? $response_data['abn'] = $query_abn : false);
+        (isset($query_contact) ? $response_data['authContact'] = $query_contact : false);
+        (isset($query_name) ? $response_data['businessName'] = $query_name : false);
+        (isset($query_email) ? $response_data['email'] = $query_email : false);
+        (isset($query_phone) ? $response_data['phone'] = $query_phone : false);
+        (isset($query_postcode) ? $response_data['postcode'] = $query_postcode : false);
+        (isset($query_state) ? $response_data['state'] = $query_state : false);
+        (isset($query_address) ? $response_data['streetAddress'] = $query_address : false);
+        (isset($query_suburb) ? $response_data['suburb'] = $query_suburb : false);
       }
 
       $response = new Response();
