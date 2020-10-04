@@ -17,6 +17,10 @@ class Location {
   /**
    * @var string 
    */
+  private $_shortname;
+  /**
+   * @var string 
+   */
   private $_auth_contact;
   /**
    * @var bool 
@@ -48,7 +52,7 @@ class Location {
   private $_checklist;
 
   public function __construct() {
-    $this->_id = $this->_name = $this->_auth_contact = $this->_phone_number = $this->_email = $this->_abn = null;
+    $this->_id = $this->_name = $this->_shortname = $this->_auth_contact = $this->_phone_number = $this->_email = $this->_abn = null;
     $this->_avatar = false;
     $this->_address = new Address();
     $this->_follow_on = new FollowOn();
@@ -57,6 +61,7 @@ class Location {
 
   public function getID():int { return $this->_id; }
   public function getName():string { return $this->_name; }
+  public function getShortname():string { return $this->_shortname; }
   public function getAuthorisedContact():string { return $this->_auth_contact; }
   public function getAvatar():bool { return $this->_avatar; }
   public function getPhoneNumber():string { return $this->_phone_number; }
@@ -76,6 +81,12 @@ class Location {
   public function setName(string $name):bool {
     if (is_null($name) || !is_string($name)) throw new APIException("Name must not be null and must be a string.");
     $this->_name = $name;
+    return true; 
+  }
+
+  public function setShortname(string $name):bool {
+    if (is_null($name) || !is_string($name)) throw new APIException("Name must not be null and must be a string.");
+    $this->_shortname = $name;
     return true; 
   }
 

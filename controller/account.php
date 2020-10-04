@@ -36,7 +36,7 @@ try {
       $location->setID(intval($_GET['id']));
 
       $query_id = $location->getID();
-      $query = $writeDB->prepare("SELECT `business_name`, `auth_contact`, `avatar_mime`, `phone`, `street_address`, `suburb`, `state`, `postcode`, `email`, `checklist_select_all` FROM `accounts` WHERE id=:id");
+      $query = $writeDB->prepare("SELECT `business_name`, `abn`, `auth_contact`, `avatar_mime`, `phone`, `street_address`, `suburb`, `state`, `postcode`, `email`, `checklist_select_all` FROM `accounts` WHERE id=:id");
       $query->bindParam(':id', $query_id, PDO::PARAM_STR);
       $query->execute();
 
@@ -52,6 +52,7 @@ try {
 
       $row = $query->fetch(PDO::FETCH_ASSOC);
       $location->setName($row['business_name']);
+      $location->setABN($row['abn']);
       $location->setAuthContact($row['auth_contact']);
       $location->setAvatar($row['avatar_mime'] !== "NULL");
       $location->setPhoneNumber($row['phone']);
@@ -73,6 +74,7 @@ try {
 
       $response_data = [
         'name' => $location->getName(),
+        'abn' => $location->getABN(),
         'authContact' => $location->getAuthorisedContact(),
         'logo' => $location->getAvatar(),
         'phone' => $location->getPhoneNumber(),
@@ -201,7 +203,28 @@ try {
       exit();
     }
 
-    //TODO - insert shortname generator here
+    $shortnames = Config::ShortnameGenerator($location->getName());
+    $query_sn = join(", ", $shortnames);
+    $query = $writeDB->prepare("SELECT id, shortname FROM `accounts` WHERE shortname IN (:sn)");
+    $query->bindParam(":sn", $query_sn, PDO::PARAM_STR);
+    $query->execute();
+
+    $row_count = $query->rowCount();
+    if ($row_count > 0) {
+      $column = $query->fetchAll(PDO::FETCH_COLUMN, 1);
+      $options = array_diff($shortnames, $column);
+      if (count($options) === 0) {
+        $test = $shortnames[0] . "%";
+        $query = $writeDB->query("SELECT id, shortname FROM `accounts` WHERE shortname LIKE $test ORDER BY id DESC LIMIT 1");
+        $n = intval(str_replace($shortnames[0], "", $query->fetch(PDO::FETCH_ASSOC)['shortname'])) + 1;
+        $shortname = $shortnames[0] . $n;
+      } else {
+        $shortname = $options[0];
+      }
+    } else {
+      $shortname = $shortnames[0];
+    }
+    $location->setShortname($shortname);
 
     $passwordHash = password_hash($json_data->password, PASSWORD_DEFAULT);
 
@@ -209,6 +232,7 @@ try {
     $query_abn = $location->getABN();
     $query_contact = $location->getAuthorisedContact();
     $query_avatar = $location->getAvatar();
+    $query_shortname = $location->getShortname();
     $query_name = $location->getName();
     $query_email = $location->getEmailAddress();
     $query_phone = $location->getPhoneNumber();
@@ -217,14 +241,15 @@ try {
     $query_address = $location->address()->getStreetAddress();
     $query_suburb = $location->address()->getSuburb();
     $query = $writeDB->prepare("INSERT INTO `accounts`
-      (id, ABN, auth, auth_contact, avatar, business_name, email, phone, postcode, `state`, street_address, suburb) VALUES
-      (:id, :abn, :auth, :authContact, :avatar, :business, :email, :phone, :postcode, :state, :address, :suburb)");
+      (id, ABN, auth, auth_contact, avatar, business_name, shortname, email, phone, postcode, `state`, street_address, suburb) VALUES
+      (:id, :abn, :auth, :authContact, :avatar, :business, :sn, :email, :phone, :postcode, :state, :address, :suburb)");
     $query->bindParam(':id', $query_id, PDO::PARAM_STR);
     $query->bindParam(':abn', $query_abn, PDO::PARAM_STR);
     $query->bindParam(':auth', $passwordHash, PDO::PARAM_STR);
     $query->bindParam(':authContact', $query_contact, PDO::PARAM_STR);
     $query->bindParam(':avatar', $query_avatar, PDO::PARAM_STR);
     $query->bindParam(':business', $query_name, PDO::PARAM_STR);
+    $query->bindParam(':sn', $query_shortname, PDO::PARAM_STR);
     $query->bindParam(':email', $query_email, PDO::PARAM_STR);
     $query->bindParam(':phone', $query_phone, PDO::PARAM_STR);
     $query->bindParam(':postcode', $query_postcode, PDO::PARAM_STR);

@@ -24,18 +24,40 @@ class Config {
   public static function RegisterAPIAccess(int $id, string $endpoint) {
     require_once("DB.php");
     $writeDB = DB::connectWriteDB();
-    $query = $writeDB->prepare("INSERT INTO `actions`(`account_id`,`endpoint`) VALUES (:id, :e)");
+    $ip = self::GetIPAddress();
+    $query = $writeDB->prepare("INSERT INTO `actions`(`account_id`, `endpoint`, `ip_address`) VALUES (:id, :e, :ip)");
     $query->bindParam(':id', $id, PDO::PARAM_STR);
     $query->bindParam(':e', $endpoint, PDO::PARAM_STR);
+    $query->bindParam(':ip', $ip, PDO::PARAM_STR);
     $query->execute();
   }
 
   public static function ShortnameGenerator(string $name) {
-    $name_arr = array_fill(0, 5, $name);
-    $patterns = ['/[A-Z]/', '/[A-Z][^aeiou]?/', '/[A-Z][^aeiou]*/', '/[A-Z][a-z]/', '/[A-Z][aeiouAEIOU]?/'];
-    $replace = ['$0$1$2$3$4$5'];
-    return preg_replace($patterns, $replace, $name_arr);
+    $name_arr = [];
+    preg_match_all('/[A-Z]/', $name, $matches);
+    $name_arr[] = implode($matches[0]);
+    preg_match_all('/[A-Z][^aeiou]?/', $name, $matches);
+    $name_arr[] = implode($matches[0]);
+    preg_match_all('/[A-Z]/', $name, $matches, PREG_PATTERN_ORDER, 2);
+    $name_arr[] = substr($name, 0, 2) . implode($matches[0]);
+    preg_match_all('/[A-Z][a-z]/', $name, $matches);
+    $name_arr[] = implode($matches[0]);
+    return $name_arr;
   }
+
+  private static function GetIPAddress() {
+    foreach (array('HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR') as $key){
+        if (array_key_exists($key, $_SERVER) === true){
+            foreach (explode(',', $_SERVER[$key]) as $ip){
+                $ip = trim($ip); // just to be safe
+
+                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false){
+                    return $ip;
+                }
+            }
+        }
+    }
+}
 }
 
 class APIException extends Error {}
