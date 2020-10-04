@@ -53,7 +53,7 @@ try {
       $row = $query->fetch(PDO::FETCH_ASSOC);
       $location->setName($row['business_name']);
       $location->setAuthContact($row['auth_contact']);
-      $location->setAvatar(strlen($row['avatar_mime']) > 0);
+      $location->setAvatar($row['avatar_mime'] !== "NULL");
       $location->setPhoneNumber($row['phone']);
       $location->address()->setStreetAddress($row['street_address']);
       $location->address()->setSuburb($row['suburb']);
@@ -115,7 +115,7 @@ try {
 
       $row = $query->fetch(PDO::FETCH_ASSOC);
       $location->setName($row['business_name']);
-      $location->setAvatar(strlen($row['avatar_mime']) > 0);
+      $location->setAvatar($row['avatar_mime'] !== "NULL");
       $location->checklist()->selectAll($row['checklist_select_all']);
 
       $query = $writeDB->prepare("SELECT `statement` FROM `checklist` WHERE account_id=:id");
