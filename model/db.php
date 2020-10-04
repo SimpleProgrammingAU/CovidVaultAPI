@@ -1,12 +1,20 @@
 <?php
 
 //TODO - Update with different connections between read / write.
-class DB {
+class DB
+{
 
+    /**
+     * @var PDO 
+     */
     private static $writeDBConnection;
+    /**
+     * @var PDO 
+     */
     private static $readDBConnection;
 
-    public static function connectWriteDB() {
+    public static function connectWriteDB()
+    {
         if (is_null(self::$writeDBConnection)) {
             self::$writeDBConnection = new PDO('mysql:host=localhost;dbname=simplepr_covid;charset=utf8', getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
             self::$writeDBConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -15,7 +23,8 @@ class DB {
         return self::$writeDBConnection;
     }
 
-    public static function connectReadDB() {
+    public static function connectReadDB()
+    {
         if (is_null(self::$readDBConnection)) {
             self::$readDBConnection = new PDO('mysql:host=localhost;dbname=simplepr_covid;charset=utf8', getenv("DB_USERNAME"), getenv("DB_PASSWORD"));
             self::$readDBConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -24,5 +33,3 @@ class DB {
         return self::$readDBConnection;
     }
 }
-
-?>
