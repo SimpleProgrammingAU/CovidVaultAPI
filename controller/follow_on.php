@@ -143,11 +143,12 @@ try {
     $query_url = $location->followOn()->getURL();
     $query_start = $location->followOn()->getStart() . " 00:00:00";
     $query_expiry = $location->followOn()->getExpiry() . " 23:59:59";
-    $query = $writeDB->prepare("INSERT INTO follow_ons (account_id, `type`, `text`, img, `url`, `start`, `expiry`) VALUES (:id, :ty, :te, :im, :ur, :st, :ex)");
+    $query = $writeDB->prepare("INSERT INTO follow_ons (account_id, `type`, `text`, img, `img_mime`, `url`, `start`, `expiry`) VALUES (:id, :ty, :te, :im, :mi, :ur, :st, :ex)");
     $query->bindParam(':id', $query_id, PDO::PARAM_STR);
     $query->bindParam(':ty', $query_type, PDO::PARAM_INT);
     $query->bindParam(':te', $query_text, PDO::PARAM_STR);
     $query->bindParam(':im', $query_img, PDO::PARAM_LOB);
+    $query->bindParam(':mi', $query_mime, PDO::PARAM_STR);
     $query->bindParam(':ur', $query_url, PDO::PARAM_STR);
     $query->bindParam(':st', $query_start, PDO::PARAM_STR);
     $query->bindParam(':ex', $query_expiry, PDO::PARAM_STR);

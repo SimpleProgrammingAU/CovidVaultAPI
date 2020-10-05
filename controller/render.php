@@ -13,11 +13,7 @@ if (!isset($_GET['id'])) {
   exit();
 }
 
-if (!isset($_GET['type'])) {
-  exit();
-}
-
-if ($_GET['type'] === 'account') {
+if (isset($_GET['type']) && $_GET['type'] === 'account') {
   $query = $readDB->prepare("SELECT `avatar`, `avatar_mime` FROM accounts WHERE id = :id");
   $query_id = $_GET['id'];
   $query->bindParam(':id', $query_id, PDO::PARAM_STR);
