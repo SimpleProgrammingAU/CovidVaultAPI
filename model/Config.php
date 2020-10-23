@@ -2,7 +2,8 @@
 
 date_default_timezone_set("Australia/Melbourne");
 
-class Config {
+class Config
+{
   /**
    * Validates the inputed phone number against the list of valid phone number prefixes listed in {@link https://en.wikipedia.org/wiki/Telephone_numbers_in_Australia Wikipedia}.
    * Note: mobile phone numbers are not validated beyond length and commencing with `+614`.
@@ -10,7 +11,8 @@ class Config {
    * 
    * @return bool Returns `true` if the phone number entered is a valid Australian number; false upon failure.
    */
-  public static function ValidatePhoneNumber(string $pn):bool {
+  public static function ValidatePhoneNumber(string $pn): bool
+  {
     if (strlen($pn) !== 12) return false; //Phone number length confirmed
     if (substr($pn, 0, 3) !== "+61") return false; //Australian telephone number confirmed
     $vb = intval(substr($pn, 4, 2)); //substring to be evaluated against valid number ranges
@@ -21,7 +23,8 @@ class Config {
     return true; //Passed all validation
   }
 
-  public static function RegisterAPIAccess(int $id, string $endpoint) {
+  public static function RegisterAPIAccess(int $id, string $endpoint)
+  {
     require_once("DB.php");
     $writeDB = DB::connectWriteDB();
     $ip = self::GetIPAddress();
@@ -32,7 +35,8 @@ class Config {
     $query->execute();
   }
 
-  public static function ShortnameGenerator(string $name) {
+  public static function ShortnameGenerator(string $name)
+  {
     $name_arr = [];
     preg_match_all('/[A-Z]/', $name, $matches);
     $name_arr[] = implode($matches[0]);
@@ -45,19 +49,64 @@ class Config {
     return $name_arr;
   }
 
-  private static function GetIPAddress() {
-    foreach (array('HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR') as $key){
-        if (array_key_exists($key, $_SERVER) === true){
-            foreach (explode(',', $_SERVER[$key]) as $ip){
-                $ip = trim($ip); // just to be safe
+  private static function GetIPAddress()
+  {
+    foreach (array('HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR') as $key) {
+      if (array_key_exists($key, $_SERVER) === true) {
+        foreach (explode(',', $_SERVER[$key]) as $ip) {
+          $ip = trim($ip); // just to be safe
 
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false){
-                    return $ip;
-                }
-            }
+          if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+            return $ip;
+          }
         }
+      }
     }
-}
+  }
+
+  private static function GetMailTemplate(string $template):string
+  {
+    switch ($template) {
+      case 'register':
+        require_once('../templates/register.php');
+        break;
+      case 'password':
+        require_once('../templates/forgot_password.php');
+    }
+    return $mail_template;
+  }
+
+  public static function Mailer($options):bool {
+    $to = $options["email"];
+    $subject = ($options["type"] === "register") ? "CovidVault: Registration details for {$options['business_name']}" : "CovidVault: Password recovery";
+    $from = "covid.register@simpleprogramming.com.au";
+    $headers  = 'MIME-Version: 1.0' . "\r\n" .
+                'Content-type: text/html; charset=utf-8' . "\r\n" .
+                'From: ' . $from . "\r\n" .
+                'Reply-To: ' . $from . "\r\n" .
+                'X-Mailer: PHP/' . phpversion();
+    $content = self::GetMailTemplate($options["type"]);
+    if ($options["type"] === "register") {
+      $content = str_replace("[CONTACT_NAME]", $options["contact_name"], $content);
+      $content = str_replace("[VERIFY_LINK]", $options["verify_url"], $content);
+      $content = str_replace("[ACCOUNT_ID]", $options["account_id"], $content);
+      $content = str_replace("[BUSINESS_NAME]", $options["business_name"], $content);
+      $content = str_replace("[BUSINESS_ADDRESS]", $options["business_address"], $content);
+      $content = str_replace("[CONTACT_PHONE]", $options["contact_phone"], $content);
+      $content = str_replace("[SHORTNAME]", $options["shortname"], $content);
+    } else {
+      $content = str_replace("[CONTACT_NAME]", $options["contact_name"], $content);
+      $content = str_replace("[VERIFY_LINK]", $options["verify_url"], $content);
+    }
+
+    if(!mail($to, $subject, $content, $headers)){
+      error_log("Registration email not successfully send to $to.");
+      return false;
+    }
+    return true;
+  }
 }
 
-class APIException extends Error {}
+class APIException extends Error
+{
+}
