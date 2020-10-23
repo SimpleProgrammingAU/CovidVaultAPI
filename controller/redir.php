@@ -46,7 +46,7 @@ try {
     $row = $query->fetch(PDO::FETCH_ASSOC);
     $id = $row['id'];
     Config::RegisterAPIAccess($id, 'shortlink');
-    header("Location: https://www.covidvault.com.au/checkin/?id=$id", true, 303);
+    header("Location: " . getenv("BASE_URL") . "checkin/?id=$id", true, 303);
     exit();
 
   } else {

@@ -1,5 +1,6 @@
 <?php
 
+require_once '../model/Activator.php';
 require_once '../model/Config.php';
 require_once '../model/DB.php';
 require_once '../model/Location.php';
@@ -268,6 +269,29 @@ try {
       exit();
     }
 
+    $activator = new Activator();
+    $activator->setAccountID($query_id);
+    $activator->generateActivator();
+
+    $query_activator = $activator->getActivator();
+    $query = $writeDB->prepare("INSERT INTO `activators` (account_id, activator) VALUES (:id, :a)");
+    $query->bindParam(":id", $query_id, PDO::PARAM_STR);
+    $query->bindParam(":a", $query_activator, PDO::PARAM_STR);
+    $query->execute();
+
+    $row_count = $query->rowCount();
+    if ($row_count === 0) {
+      $response = new Response();
+      $response->setHttpStatusCode(500);
+      $response->setSuccess(false);
+      $response->addMessage("Error: database error during user creation.");
+      $response->send();
+      exit();
+    }
+
+    $activator->setID($writeDB->lastInsertId());
+    $verify_url = $activator->getBaseURL() . "dashboard/?id={$activator->getID()}&a={$activator->getAccountID()}&c={$activator->getActivator()}";
+
     $response_data = [];
     $response_data['id'] = $query_id;
     $response_data['name'] = $query_name;
@@ -275,7 +299,26 @@ try {
     $response_data['contactPhone'] = $query_phone;
     $response_data['contactEmail'] = $query_email;
 
-    include('register_mail.php');
+    $success = Config::Mailer([
+      "type" => "register",
+      "email" => $query_email,
+      "account_id" => $query_id,
+      "contact_name" => $query_contact,
+      "contact_phone" => $query_phone,
+      "business_name" => $query_name,
+      "business_address" => $location->address()->getStreetAddress(),
+      "shortname" => $query_shortname,
+      "verify_url" => $verify_url
+    ]);
+
+    if (!$success) {
+      $response = new Response();
+      $response->setHttpStatusCode(500);
+      $response->setSuccess(false);
+      $response->addMessage("Error: mailing error during user creation.");
+      $response->send();
+      exit();
+    }
 
     $response = new Response();
     $response->setHttpStatusCode(201);
@@ -332,25 +375,24 @@ try {
     $query->bindParam(':id', $query_id, PDO::PARAM_STR);
     $query->execute();
 
-      $row_count = $query->rowCount();
-      if ($row_count === 0) {
-        $response = new Response();
-        $response->setHttpStatusCode(404);
-        $response->setSuccess(false);
-        $response->addMessage("Error: venue account not found.");
-        $response->send();
-        Config::RegisterAPIAccess($query_id, "account");
-        exit();
-      }
-
+    $row_count = $query->rowCount();
+    if ($row_count === 0) {
       $response = new Response();
-      $response->setHttpStatusCode(200);
-      $response->setSuccess(true);
-      $response->addMessage("Logo successfully updated.");
+      $response->setHttpStatusCode(404);
+      $response->setSuccess(false);
+      $response->addMessage("Error: venue account not found.");
       $response->send();
       Config::RegisterAPIAccess($query_id, "account");
       exit();
+    }
 
+    $response = new Response();
+    $response->setHttpStatusCode(200);
+    $response->setSuccess(true);
+    $response->addMessage("Logo successfully updated.");
+    $response->send();
+    Config::RegisterAPIAccess($query_id, "account");
+    exit();
   } elseif ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
 
     if (!isset($_GET['id'])) {
@@ -360,6 +402,107 @@ try {
       $response->addMessage("Error: request did not contain an account id.");
       $response->send();
       exit();
+    }
+
+    if (isset($_GET['a'], $_GET['c'])) { //Account activation or Forgot password
+
+      $activator = new Activator();
+      $activator->setID(intval($_GET['a']));
+      $activator->setAccountID(intval($_GET['id']));
+      $activator->setActivator($_GET['c']);
+
+      $query_id = $activator->getID();
+      $query_aid = $activator->getAccountID();
+      $query_code = $activator->getActivator();
+
+      $query = $writeDB->prepare("SELECT is_active FROM accounts WHERE id=:id");
+      $query->bindParam(":id", $query_aid, PDO::PARAM_STR);
+      $query->execute();
+
+      $row_count = $query->rowCount();
+      if ($row_count === 0) {
+        $response = new Response();
+        $response->setHttpStatusCode(404);
+        $response->setSuccess(false);
+        $response->addMessage("Error: account not found.");
+        $response->send();
+        exit();
+      }
+
+      $raw_post_data = file_get_contents('php://input');
+
+      if (!$json_data = json_decode($raw_post_data)) {
+        $response = new Response();
+        $response->setHttpStatusCode(400);
+        $response->setSuccess(false);
+        $response->addMessage("Error: request body is not valid JSON.");
+        $response->send();
+        exit();
+      }
+
+      if ($query->fetch(PDO::FETCH_ASSOC)['is_active']) { //Forgot password
+        if (!isset($json_data->password)) {
+          $response = new Response();
+          $response->setHttpStatusCode(400);
+          $response->setSuccess(false);
+          $response->addMessage("Error: new password not provided.");
+          $response->send();
+          exit();
+        }
+
+        $passwordHash = password_hash($json_data->password, PASSWORD_DEFAULT);
+        $query = $writeDB->prepare("UPDATE accounts SET auth=:pw WHERE id=:id");
+        $query->bindParam(":pw", $passwordHash, PDO::PARAM_STR);
+        $query->bindParam(":id", $query_aid, PDO::PARAM_STR);
+        $query->execute();
+
+        $row_count = $query->rowCount();
+        if ($row_count === 0) {
+          $response = new Response();
+          $response->setHttpStatusCode(400);
+          $response->setSuccess(false);
+          $response->addMessage("Error: password update failed.");
+          $response->send();
+          exit();
+        }
+      } else { //New account activation
+        $query = $writeDB->prepare("DELETE FROM activators WHERE id=:a AND account_id=:id AND activator=:c");
+        $query->bindParam(":a", $query_id, PDO::PARAM_STR);
+        $query->bindParam(":id", $query_aid, PDO::PARAM_STR);
+        $query->bindParam(":c", $query_code, PDO::PARAM_STR);
+        $query->execute();
+
+        $row_count = $query->rowCount();
+        if ($row_count === 0) {
+          $response = new Response();
+          $response->setHttpStatusCode(404);
+          $response->setSuccess(false);
+          $response->addMessage("Error: matching account activator not found.");
+          $response->send();
+          exit();
+        }
+
+        $query = $writeDB->prepare("UPDATE accounts SET is_active=1 WHERE id=:id");
+        $query->bindParam(":id", $query_aid, PDO::PARAM_STR);
+        $query->execute();
+
+        $row_count = $query->rowCount();
+        if ($row_count === 0) {
+          $response = new Response();
+          $response->setHttpStatusCode(404);
+          $response->setSuccess(false);
+          $response->addMessage("Error: account activation unsuccessful, contact administrator.");
+          $response->send();
+          exit();
+        }
+
+        $response = new Response();
+        $response->setHttpStatusCode(200);
+        $response->setSuccess(false);
+        $response->setData(['activator' => true]);
+        $response->send();
+        exit();
+      }
     }
 
     include('authenticate.php');
@@ -540,9 +683,8 @@ try {
       $response->send();
       exit();
     }
-
   } elseif ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-    
+
     if (!isset($_GET['id'])) {
       $response = new Response();
       $response->setHttpStatusCode(400);
@@ -561,13 +703,22 @@ try {
     $query->bindParam(':id', $query_id, PDO::PARAM_STR);
     $query->execute();
 
+    $row_count = $query->rowCount();
+    if ($row_count === 0) {
+      $response = new Response();
+      $response->setHttpStatusCode(404);
+      $response->setSuccess(false);
+      $response->addMessage("Error: account not found.");
+      $response->send();
+      exit();
+    }
+
     $response = new Response();
     $response->setHttpStatusCode(200);
     $response->setSuccess(true);
     $response->addMessage("Account successfully deleted.");
     $response->send();
     exit();
-
   } else {
     $response = new Response();
     $response->setHttpStatusCode(405);
