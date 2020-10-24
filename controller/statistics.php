@@ -34,7 +34,7 @@ try {
     $statistics->location()->setID(intval($_GET['id']));
 
     $query_id = $statistics->location()->getID();
-    $query = $writeDB->prepare("SELECT weekday(arr) as `id`, COUNT(DISTINCT DATE(`arr`)) as F, COUNT(*) as `N` FROM `contacts` WHERE account_id = :id GROUP BY weekday(arr)");
+    $query = $writeDB->prepare("SELECT weekday(arr) as `id`, COUNT(DISTINCT DATE(`arr`)) as F, COUNT(*) as `N` FROM `contacts` WHERE account_id = :id AND DATE(`arr`) < DATE(NOW()) GROUP BY weekday(arr)");
     $query->bindParam(':id', $query_id, PDO::PARAM_STR);
     $query->execute();
 
@@ -43,7 +43,7 @@ try {
       $statistics->importDay($query->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    $query = $writeDB->prepare("SELECT HOUR(arr) as `id`, COUNT(*) AS `N` FROM `contacts` WHERE account_id = :id GROUP BY hour(arr)");
+    $query = $writeDB->prepare("SELECT HOUR(arr) as `id`, COUNT(*) AS `N` FROM `contacts` WHERE account_id = :id AND DATE(`arr`) < DATE(NOW()) GROUP BY hour(arr)");
     $query->bindParam(':id', $query_id, PDO::PARAM_STR);
     $query->execute();
 
@@ -58,7 +58,9 @@ try {
 
     $row_count = $query->rowCount();
     if ($row_count > 0) {
-      $statistics->setReturn($query->fetch(PDO::FETCH_ASSOC)['p']);
+      $row = $query->fetch(PDO::FETCH_ASSOC);
+      $data = is_null($row['p']) ? 0 : $row['p'];
+      $statistics->setReturn($data);
     }
 
     $query = $writeDB->prepare("SELECT COUNT(*) AS `n` FROM `contacts` WHERE `account_id` = :id AND DATE(`arr`) = DATE(NOW())");
@@ -67,7 +69,18 @@ try {
 
     $row_count = $query->rowCount();
     if ($row_count > 0) {
-      $statistics->setToday($query->fetch(PDO::FETCH_ASSOC)['n']);
+      $row = $query->fetch(PDO::FETCH_ASSOC);
+      $data = is_null($row['n']) ? 0 : $row['n'];
+      $statistics->setToday($data);
+    }
+
+    $query = $writeDB->prepare("SELECT YEAR(`datetime`) as `year`, MONTH(`datetime`) as `month`, COUNT(*) AS `n` FROM actions WHERE account_id=:id GROUP BY `year`, `month` ORDER BY id DESC");
+    $query->bindParam(":id", $query_id, PDO::PARAM_STR);
+    $query->execute();
+
+    $row_count = $query->rowCount();
+    if ($row_count > 0) {
+      $statistics->importAPIStats($query->fetchAll(PDO::FETCH_ASSOC));
     }
 
     $response = new Response();
@@ -77,8 +90,10 @@ try {
       "byDay" => $statistics->getTimeStats(Statistics::DAY),
       "byHour" => $statistics->getTimeStats(Statistics::HOUR),
       "return" => $statistics->getReturnStats(),
-      "today" => $statistics->getTodayCount()
+      "today" => $statistics->getTodayCount(),
+      "api" => $statistics->getAPIStats()
     ]);
+    Config::RegisterAPIAccess($statistics->location()->getID(), "statistics");
     $response->send();
     exit();
 

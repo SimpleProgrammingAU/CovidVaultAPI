@@ -143,7 +143,7 @@ if (array_key_exists("id", $_GET)) {
                 $response = new Response();
                 $response->setHttpStatusCode(401);
                 $response->setSuccess(false);
-                $response->addMessage("Error: account does not have this feature switched on.");
+                $response->addMessage("Error: account not currently active.");
                 $response->send();
                 exit();
             }
