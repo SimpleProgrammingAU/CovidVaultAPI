@@ -38,7 +38,7 @@ class Extract {
   }
 
   public function detectMode(string $data):bool {
-    if (substr($data, 0, 1) === "+") {
+    if (strlen($data) === 12) {
       $this->mode = self::MODE_PHONE;
       return true;
     }
@@ -59,9 +59,7 @@ class Extract {
 
   public function addRow(string $name, string $phone, string $arr, string $dep):bool {
     $visitor = new Visitor();
-    $visitor->setName($name);
-    $visitor->setPhoneNumber($phone);
-    array_push($this->data_table, new Visit($visitor->getName(), $visitor->getPhoneNumber(), $arr, $dep));
+    array_push($this->data_table, new Visit($name, $phone, $arr, $dep));
     return true;
   }
 

@@ -51,7 +51,7 @@ class Visitor {
   }
 
   public function setPhoneNumber(string $pn):bool {
-    if (is_null($pn) || !Config::ValidatePhoneNumber($pn)) throw new APIException("Phone number must not be null and must be a string in the format +61xxxxxxxxx.");
+    if (is_null($pn) || !Config::ValidatePhoneNumber($pn)) throw new APIException("Phone number must not be null and must be a string in the format +61xxxxxxxxx. For example, if your telephone number is 0412-123-987 you would enter +61412123987.");
     $this->_phone_number = $pn;
     return true;
   }

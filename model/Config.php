@@ -16,6 +16,7 @@ class Config
     if (strlen($pn) !== 12) return false; //Phone number length confirmed
     if (substr($pn, 0, 3) !== "+61") return false; //Australian telephone number confirmed
     $vb = intval(substr($pn, 4, 2)); //substring to be evaluated against valid number ranges
+    if (in_array(substr($pn, 3, 1), ["0", "1", "5", "6", "9"])) return false; //Invalid area codes eliminated
     if (substr($pn, 3, 1) === "2" && ($vb < 37 && $vb !== 33)) return false; //NSW/ACT Number confirmed
     if (substr($pn, 3, 1) === "3" && ($vb < 32 || $vb > 34) && ($vb < 40 || $vb > 67 && ($vb !== 46 || $vb !== 60 || $vb !== 66)) && $vb < 70) return false; //VIC/TAS Number confirmed
     if (substr($pn, 3, 1) === "7" && ($vb < 20 && $vb > 58 && ($vb !== 50 || $vb !== 51)) && $vb !== 70 && ($vb < 75 || $vb > 77) && $vb !== 79) return false; //QLD Number confirmed

@@ -35,6 +35,7 @@ if (!isset($_GET['data'])) {
   $response->send();
   exit();
 }
+$data = str_replace(" ", "+", $_GET['data']);
 
 if ($_SERVER['CONTENT_TYPE'] !== 'application/json') {
   $response = new Response();
@@ -73,7 +74,7 @@ try {
     $extract = new Extract();
     $extract->location->setID(intval($_GET['id']));
     $extract->location->setAuthContact($json_data->authName);
-    if (!$extract->detectMode($_GET['data'])) {
+    if (!$extract->detectMode($data)) {
       $response = new Response();
       $response->setHttpStatusCode(400);
       $response->setSuccess(false);
@@ -112,7 +113,7 @@ try {
 
     if ($extract->getMode() === Extract::MODE_PHONE) {
       $visitor = new Visitor();
-      $visitor->setPhoneNumber($_GET['data']);
+      $visitor->setPhoneNumber($data);
 
       $query_phone = $visitor->getPhoneNumber();
       $query = $writeDB->prepare("SELECT a.id as id, a.business_name as `location`, COUNT(c.phone) as `count` FROM accounts a, contacts c WHERE c.phone = :ph AND a.id = c.account_id GROUP BY `location`");
@@ -142,7 +143,7 @@ try {
         $response->send();
         exit();
       }
-    } else {
+    } elseif ($extract->getMode() === Extract::MODE_DATE) {
       $query_date = $extract->getDate();
       $query = $writeDB->prepare("SELECT `name`, `phone`, `arr`, `dep` FROM contacts WHERE account_id =:id AND DATE(arr)=DATE(:d)");
       $query->bindParam(":id", $query_id, PDO::PARAM_STR);
@@ -171,6 +172,14 @@ try {
       $response->setHttpStatusCode(200);
       $response->setSuccess(true);
       $response->addMessage("Request received successfully.");
+      $response->addMessage("Data: {$data}");
+      $response->send();
+      exit();
+    } else {
+      $response = new Response();
+      $response->setHttpStatusCode(401);
+      $response->setSuccess(false);
+      $response->addMessage("Error: extraction request type not identified.");
       $response->send();
       exit();
     }
@@ -195,6 +204,8 @@ try {
   $response->setHttpStatusCode(400);
   $response->setSuccess(false);
   $response->addMessage("API Exception: " . $e->getMessage());
+  $response->addMessage("Data: {$data} - length: " . strlen($data));
+  $response->addMessage("Mode: " . $extract->getMode());
   $response->send();
   exit();
 } catch (Exception $e) {
