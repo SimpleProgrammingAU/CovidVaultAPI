@@ -1,5 +1,9 @@
 <?php
 $mail_template = <<<CONTENT
+--[UID]
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
 <html>
 <head>
 <meta charset="utf-8" />
@@ -39,10 +43,12 @@ covidvault.com.au/[SHORTNAME]</p>
 <li>Phone: <a href="tel:+61390133909">+613 9013 3909</a></li>
 </ul>
 </p>
-<p>CovidVault is free for up to 5,000 API calls per month per business and charged at 0.1 cents per each API call thereafter. Payment details will only be requested upon reaching the requisite usage in a given month. This ensures the application can be sufficiently tested prior to any payment. If you have any questions, please do not hesitate to contact me on the details above.</p>
+<p>CovidVault is free for up to 5,000 API calls per month per business and charged at $0.01 per each API call thereafter. Payment details will only be requested upon reaching the requisite usage in a given month. This ensures the application can be sufficiently tested prior to any payment. If you have any questions, please do not hesitate to contact me on the details above.</p>
 <p>Kind regards, <br /></p>
 <p>Sam<br />
 <a href="https://www.simpleprogramming.com.au/">Simple Programming</a> is proudly made in North Melbourne, Australia.</p>
 </body>
 </html>
+
+--[UID]--
 CONTENT;

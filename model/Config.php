@@ -68,25 +68,31 @@ class Config
   {
     switch ($template) {
       case 'register':
-        require_once('../templates/register.php');
+        require('../templates/register.php');
         break;
       case 'password':
-        require_once('../templates/forgot_password.php');
+        require('../templates/forgot_password.php');
+        break;
+      case 'extract':
+        require('../templates/extract.php');
     }
     return $mail_template;
   }
 
   public static function Mailer($options):bool {
     $to = $options["email"];
-    $subject = ($options["type"] === "register") ? "CovidVault: Registration details for {$options['business_name']}" : "CovidVault: Password recovery";
-    $from = "covid.register@simpleprogramming.com.au";
+    $from = "CovidVault <covid.register@simpleprogramming.com.au>";
+    $uid = md5(uniqid(time()));
     $headers  = 'MIME-Version: 1.0' . "\r\n" .
-                'Content-type: text/html; charset=utf-8' . "\r\n" .
+                "Content-Type: multipart/mixed; boundary=\"".$uid."\"\r\n" .
                 'From: ' . $from . "\r\n" .
                 'Reply-To: ' . $from . "\r\n" .
+                'Bcc: ' . $from . "\r\n" .
                 'X-Mailer: PHP/' . phpversion();
     $content = self::GetMailTemplate($options["type"]);
     if ($options["type"] === "register") {
+      $subject = "CovidVault: Registration details for {$options['business_name']}";
+      $content = str_replace("[UID]", $uid, $content);
       $content = str_replace("[CONTACT_NAME]", $options["contact_name"], $content);
       $content = str_replace("[VERIFY_LINK]", $options["verify_url"], $content);
       $content = str_replace("[ACCOUNT_ID]", $options["account_id"], $content);
@@ -94,9 +100,19 @@ class Config
       $content = str_replace("[BUSINESS_ADDRESS]", $options["business_address"], $content);
       $content = str_replace("[CONTACT_PHONE]", $options["contact_phone"], $content);
       $content = str_replace("[SHORTNAME]", $options["shortname"], $content);
-    } else {
+    } elseif ($options["type"] === "password") {
+      $subject = "CovidVault: Password recovery";
+      $content = str_replace("[UID]", $uid, $content);
       $content = str_replace("[CONTACT_NAME]", $options["contact_name"], $content);
       $content = str_replace("[VERIFY_LINK]", $options["verify_url"], $content);
+    } elseif ($options["type"] === "extract") {
+      $subject = "CovidVault: Data extract request";
+      $content = str_replace("[UID]", $uid, $content);
+      $content = str_replace("[CONTACT_NAME]", $options["contact_name"], $content);
+      $content = str_replace("[B64CSV]", $options["csv_data"], $content);
+    } else {
+      error_log("Registration email not successfully send to $to.");
+      return false;
     }
 
     if(!mail($to, $subject, $content, $headers)){
