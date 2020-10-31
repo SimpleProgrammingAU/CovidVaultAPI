@@ -1,5 +1,9 @@
 <?php
 $mail_template = <<<CONTENT
+--[UID]
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: 8bit
+
 <html>
 <head>
 <meta charset="utf-8" />
@@ -20,4 +24,6 @@ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 <a href="https://www.simpleprogramming.com.au/">Simple Programming</a> is proudly made in North Melbourne, Australia.</p>
 </body>
 </html>
+
+--[UID]--
 CONTENT;

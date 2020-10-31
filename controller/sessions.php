@@ -296,7 +296,6 @@ if (array_key_exists("id", $_GET)) {
         $query->execute();
 
         $rowCount = $query->rowCount();
-
         if ($rowCount === 0) {
             $response = new Response();
             $response->setHttpStatusCode(401);
