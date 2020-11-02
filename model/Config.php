@@ -76,6 +76,9 @@ class Config
         break;
       case 'extract':
         require('../templates/extract.php');
+      case 'newsletter': {
+        require('../templates/newsletter.php');
+      }
     }
     return $mail_template;
   }
@@ -111,6 +114,14 @@ class Config
       $content = str_replace("[UID]", $uid, $content);
       $content = str_replace("[CONTACT_NAME]", $options["contact_name"], $content);
       $content = str_replace("[B64CSV]", $options["csv_data"], $content);
+    } elseif ($options["type"] === "newsletter") {
+      $subject = "CovidVault: $options[month] Usage Report";
+      $content = str_replace("[UID]", $uid, $content);
+      $content = str_replace("[MONTH]", $options["month"], $content);
+      $content = str_replace("[YEAR]", $options["year"], $content);
+      $content = str_replace("[REQUESTS]", $options["requests"], $content);
+      $content = str_replace("[FREE_PERCENTAGE]", $options["free_percent"], $content);
+      $content = str_replace("[CONTACT_NAME]", $options["contact_name"], $content);
     } else {
       error_log("Registration email not successfully send to $to.");
       return false;
