@@ -37,6 +37,7 @@ covidvault.com.au/[SHORTNAME]</p>
 <p>If you have a check-in kiosk set up at your entrance with a tablet device, use the following URL to enable kiosk mode:
 <a href="https://www.covidvault.com.au/checkin/?id=[ACCOUNT_ID]&kiosk">https://www.covidvault.com.au/checkin/?id=[ACCOUNT_ID]&kiosk</a></p>
 <p>To update your account details, please sign in to the <a href="https://www.covidvault.com.au/dashboard">account dashboard</a>.</p>
+<p>If you need printable templates for your QR Codes, please see the <a href="https://www.covidvault.com.au/faq.html">CovidVault FAQ</a>.</p>
 <p>If you have a data request (or any questions), you are welcome to contact me via either of the following methods:
 <ul>
 <li>Email: <a href="mailto: covid.register@simpleprogramming.com.au">covid.register@simpleprogramming.com.au</a> or</li>

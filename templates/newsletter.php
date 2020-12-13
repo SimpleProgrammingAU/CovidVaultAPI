@@ -1140,7 +1140,7 @@ color:rgba(255, 255, 255, 0.8);font-variant-ligatures: normal;font-variant-caps:
 orphans: 2;widows: 2;-webkit-text-stroke-width: 0px;text-decoration-style: initial;
 text-decoration-color: initial;word-spacing:0px'><b><span style='font-size:
 14.0pt;font-family:Montserrat;mso-bidi-font-family:"Times New Roman";
-mso-bidi-theme-font:minor-bidi;color:white;mso-themecolor:background1'>[REQUESTS]<o:p></o:p></span></b></p>
+mso-bidi-theme-font:minor-bidi;color:white;mso-themecolor:background1'>[REQUESTS] requests<o:p></o:p></span></b></p>
 <p align=center style='text-align:center;background:black;mso-element:frame;
 mso-element-frame-hspace:9.0pt;mso-element-wrap:around;mso-element-anchor-horizontal:
 margin;mso-element-top:-11.25pt;mso-height-rule:exactly'><span
@@ -1206,8 +1206,7 @@ tab-stops:list 36.0pt;mso-element:frame;mso-element-frame-hspace:9.0pt;
 mso-element-wrap:around;mso-element-anchor-horizontal:margin;mso-element-top:
 -11.25pt;mso-height-rule:exactly'><span style='font-size:11.5pt;
 font-family:Montserrat;mso-fareast-font-family:"Times New Roman";
-mso-bidi-font-family:Calibri'>The analytics page has been restored to
-the dashboard<o:p></o:p></span></li>
+mso-bidi-font-family:Calibri'>Three QR Code printable templates are now available from the FAQ page<o:p></o:p></span></li>
 <li class=MsoNormal style='color:white;mso-themecolor:background1;
 mso-margin-top-alt:auto;mso-margin-bottom-alt:auto;mso-list:l0 level1 lfo3;
 tab-stops:list 36.0pt;mso-element:frame;mso-element-frame-hspace:9.0pt;
